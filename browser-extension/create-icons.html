@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+</head>
+<body>
+  <h2>Browser Extension Icon Generator</h2>
+  <p>Right-click each canvas below and "Save image as..." to create the icon files.</p>
+
+  <div>
+    <h3>icon16.png (16x16)</h3>
+    <canvas id="icon16" width="16" height="16"></canvas>
+  </div>
+
+  <div>
+    <h3>icon48.png (48x48)</h3>
+    <canvas id="icon48" width="48" height="48"></canvas>
+  </div>
+
+  <div>
+    <h3>icon128.png (128x128)</h3>
+    <canvas id="icon128" width="128" height="128"></canvas>
+  </div>
+
+  <script>
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#6366f1');
+      gradient.addColorStop(1, '#4f46e5');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // Briefcase icon (simplified)
+      ctx.fillStyle = 'white';
+
+      const scale = size / 16; // Base scale on 16x16
+
+      // Top handle
+      const handleWidth = 6 * scale;
+      const handleHeight = 2 * scale;
+      const handleX = (size - handleWidth) / 2;
+      const handleY = 3 * scale;
+      ctx.fillRect(handleX, handleY, handleWidth, handleHeight);
+
+      // Main briefcase body
+      const bodyWidth = 10 * scale;
+      const bodyHeight = 7 * scale;
+      const bodyX = (size - bodyWidth) / 2;
+      const bodyY = 5 * scale;
+      ctx.fillRect(bodyX, bodyY, bodyWidth, bodyHeight);
+
+      // Lock/clasp detail
+      const claspSize = 1.5 * scale;
+      const claspX = (size - claspSize) / 2;
+      const claspY = 7 * scale;
+      ctx.fillRect(claspX, claspY, claspSize, claspSize);
+    }
+
+    drawIcon('icon16', 16);
+    drawIcon('icon48', 48);
+    drawIcon('icon128', 128);
+
+    // Add instructions
+    document.body.innerHTML += `
+      <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+        <h3>Instructions:</h3>
+        <ol>
+          <li>Open this file in your browser</li>
+          <li>Right-click on each canvas image above</li>
+          <li>Select "Save image as..."</li>
+          <li>Save to the <code>browser-extension/icons/</code> folder with the correct filename (icon16.png, icon48.png, icon128.png)</li>
+        </ol>
+        <p><strong>Alternative:</strong> You can use any image editor to create simple 16x16, 48x48, and 128x128 PNG icons, or download free icons from sites like Flaticon.</p>
+      </div>
+    `;
+  </script>
+</body>
+</html>
