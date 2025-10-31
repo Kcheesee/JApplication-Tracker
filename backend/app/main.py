@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .config import get_settings
-from .database import init_db
-from .routes import auth, applications, sync, settings, llm, oauth
+from app.config import get_settings
+from app.database import init_db
+from app.routes import auth, applications, sync, settings, llm, oauth
 
 # Get settings
 app_settings = get_settings()
