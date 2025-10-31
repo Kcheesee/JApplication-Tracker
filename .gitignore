@@ -1,7 +1,9 @@
 # Credentials and tokens - NEVER commit these!
 credentials.json
 token.pickle
+# config.py is ignored here, but backend/app/config.py is safe (only has defaults)
 config.py
+!backend/app/config.py
 .env
 .env.local
 .env.*.local
