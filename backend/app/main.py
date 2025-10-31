@@ -7,7 +7,11 @@ backend_dir = Path(__file__).resolve().parent.parent
 print(f"DEBUG: __file__ = {__file__}")
 print(f"DEBUG: backend_dir = {backend_dir}")
 print(f"DEBUG: backend_dir exists = {backend_dir.exists()}")
-print(f"DEBUG: Files in backend_dir: {list(backend_dir.iterdir()) if backend_dir.exists() else 'N/A'}")
+print(f"DEBUG: app dir path = {backend_dir / 'app'}")
+print(f"DEBUG: app dir exists = {(backend_dir / 'app').exists()}")
+print(f"DEBUG: Files in app dir: {list((backend_dir / 'app').iterdir()) if (backend_dir / 'app').exists() else 'N/A'}")
+print(f"DEBUG: config.py exists = {(backend_dir / 'app' / 'config.py').exists()}")
+print(f"DEBUG: __init__.py exists = {(backend_dir / 'app' / '__init__.py').exists()}")
 print(f"DEBUG: sys.path before = {sys.path}")
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
