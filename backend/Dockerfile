@@ -12,8 +12,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code (only the app directory and necessary files)
+COPY app ./app
+COPY migrations ./migrations
+COPY .env.example .
 
 # Expose port
 EXPOSE 8000
