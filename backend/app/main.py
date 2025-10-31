@@ -1,10 +1,17 @@
 import sys
+import os
 from pathlib import Path
 
 # Add parent directory to path for imports to work
 backend_dir = Path(__file__).resolve().parent.parent
+print(f"DEBUG: __file__ = {__file__}")
+print(f"DEBUG: backend_dir = {backend_dir}")
+print(f"DEBUG: backend_dir exists = {backend_dir.exists()}")
+print(f"DEBUG: Files in backend_dir: {list(backend_dir.iterdir()) if backend_dir.exists() else 'N/A'}")
+print(f"DEBUG: sys.path before = {sys.path}")
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
+print(f"DEBUG: sys.path after = {sys.path}")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
