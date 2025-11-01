@@ -109,7 +109,7 @@ export default function Settings() {
   }
 
   const handleSaveApiKey = async (provider: 'anthropic' | 'openai' | 'google' | 'openrouter') => {
-    const keyFieldMap = {
+    const keyFieldMap: Record<typeof provider, keyof typeof formData> = {
       anthropic: 'anthropic_api_key',
       openai: 'openai_api_key',
       google: 'google_api_key',
@@ -117,7 +117,7 @@ export default function Settings() {
     }
 
     const keyField = keyFieldMap[provider]
-    const apiKey = formData[keyField]
+    const apiKey = formData[keyField] as string
 
     if (!apiKey) {
       toast.error('Please enter an API key first')
