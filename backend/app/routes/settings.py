@@ -45,6 +45,7 @@ def get_settings(
         gmail_enabled=settings.gmail_enabled,
         gmail_search_days=settings.gmail_search_days,
         gmail_keywords=settings.gmail_keywords or [],
+        gmail_auto_sync_enabled=settings.gmail_auto_sync_enabled or False,
         email_notifications=settings.email_notifications,
         daily_summary_enabled=settings.daily_summary_enabled
     )
@@ -106,6 +107,7 @@ def update_settings(
         gmail_enabled=settings.gmail_enabled,
         gmail_search_days=settings.gmail_search_days,
         gmail_keywords=settings.gmail_keywords or [],
+        gmail_auto_sync_enabled=settings.gmail_auto_sync_enabled or False,
         email_notifications=settings.email_notifications,
         daily_summary_enabled=settings.daily_summary_enabled
     )

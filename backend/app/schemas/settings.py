@@ -24,6 +24,7 @@ class UserSettingsUpdate(BaseModel):
     gmail_enabled: Optional[bool] = None
     gmail_search_days: Optional[int] = None
     gmail_keywords: Optional[List[str]] = None
+    gmail_auto_sync_enabled: Optional[bool] = None
 
     # Notification Settings
     email_notifications: Optional[bool] = None
@@ -55,6 +56,7 @@ class UserSettingsResponse(BaseModel):
     gmail_enabled: bool
     gmail_search_days: int
     gmail_keywords: List[str]
+    gmail_auto_sync_enabled: bool
 
     # Notification Settings
     email_notifications: bool

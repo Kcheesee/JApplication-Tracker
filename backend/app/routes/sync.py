@@ -73,10 +73,11 @@ def sync_gmail(
     if not keywords:
         keywords = ["application", "interview", "position", "offer", "candidate"]
 
+    # Fetch all emails (up to 500 max to avoid overwhelming the system)
     emails = gmail_service.search_job_emails(
         keywords=keywords,
         days_back=settings.gmail_search_days,
-        max_results=50
+        max_results=500
     )
 
     # Process each email

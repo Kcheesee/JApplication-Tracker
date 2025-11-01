@@ -66,9 +66,9 @@ class GmailService:
         """Return the updated token dict for persistence"""
         return self.token_dict
 
-    def search_job_emails(self, keywords: List[str], days_back: int = 7, max_results: int = 50) -> List[Dict[str, Any]]:
+    def search_job_emails(self, keywords: List[str], days_back: int = 7, max_results: int = 500) -> List[Dict[str, Any]]:
         """
-        Search for job-related emails in Gmail
+        Search for job-related emails in Gmail with pagination support
         Returns list of email data dictionaries
         """
         # Calculate date for filtering
@@ -79,18 +79,35 @@ class GmailService:
         query = f'({keyword_query}) after:{date_filter}'
 
         try:
-            # Search for messages
-            results = self.service.users().messages().list(
-                userId='me',
-                q=query,
-                maxResults=max_results
-            ).execute()
+            all_messages = []
+            page_token = None
 
-            messages = results.get('messages', [])
+            # Paginate through all results
+            while len(all_messages) < max_results:
+                # Search for messages with pagination
+                results = self.service.users().messages().list(
+                    userId='me',
+                    q=query,
+                    maxResults=min(100, max_results - len(all_messages)),  # Gmail API max is 500 per request, we use 100 for efficiency
+                    pageToken=page_token
+                ).execute()
+
+                messages = results.get('messages', [])
+                if not messages:
+                    break
+
+                all_messages.extend(messages)
+
+                # Check if there are more pages
+                page_token = results.get('nextPageToken')
+                if not page_token:
+                    break
+
             email_data_list = []
 
             # Get full email data for each message
-            for message in messages:
+            print(f"Found {len(all_messages)} emails to process")
+            for message in all_messages:
                 msg_id = message['id']
                 email_data = self.get_email_data(msg_id)
                 if email_data:

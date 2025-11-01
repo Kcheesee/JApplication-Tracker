@@ -32,6 +32,7 @@ class UserSettings(Base):
     gmail_enabled = Column(Boolean, default=True)
     gmail_search_days = Column(Integer, default=7)
     gmail_keywords = Column(JSON, default=list)  # List of keywords to search
+    gmail_auto_sync_enabled = Column(Boolean, default=False)  # Daily auto-sync from Gmail
 
     # Notification settings
     email_notifications = Column(Boolean, default=True)

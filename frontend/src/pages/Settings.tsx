@@ -30,6 +30,7 @@ export default function Settings() {
     openrouter_api_key: '',
     gmail_enabled: true,
     gmail_search_days: 7,
+    gmail_auto_sync_enabled: false,
     email_notifications: true,
   })
 
@@ -62,6 +63,7 @@ export default function Settings() {
         openrouter_api_key: '',
         gmail_enabled: response.data.gmail_enabled,
         gmail_search_days: response.data.gmail_search_days,
+        gmail_auto_sync_enabled: response.data.gmail_auto_sync_enabled || false,
         email_notifications: response.data.email_notifications,
       })
     } catch (error) {
@@ -428,6 +430,22 @@ export default function Settings() {
                   <div className="ml-3 text-sm">
                     <label className="font-medium text-gray-700">Enable Gmail Sync</label>
                     <p className="text-gray-500">Automatically scan Gmail for job application emails</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      name="gmail_auto_sync_enabled"
+                      checked={formData.gmail_auto_sync_enabled}
+                      onChange={handleChange}
+                      className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <label className="font-medium text-gray-700">Daily Auto-Sync</label>
+                    <p className="text-gray-500">Automatically sync Gmail once per day (requires Gmail enabled)</p>
                   </div>
                 </div>
 
