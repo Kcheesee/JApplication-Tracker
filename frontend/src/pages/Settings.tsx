@@ -433,7 +433,8 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="flex items-start">
+                {/* Auto-sync coming soon - temporarily hidden */}
+                {/* <div className="flex items-start">
                   <div className="flex items-center h-5">
                     <input
                       type="checkbox"
@@ -447,7 +448,7 @@ export default function Settings() {
                     <label className="font-medium text-gray-700">Daily Auto-Sync</label>
                     <p className="text-gray-500">Automatically sync Gmail once per day (requires Gmail enabled)</p>
                   </div>
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
