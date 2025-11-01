@@ -6,6 +6,10 @@ from ..models.user_settings import UserSettings
 from ..schemas.settings import UserSettingsUpdate, UserSettingsResponse
 from ..auth.security import get_current_user
 from ..utils.encryption import encrypt_api_key
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["Settings"])
 
@@ -71,9 +75,12 @@ def update_settings(
             try:
                 update_data[field] = encrypt_api_key(update_data[field])
             except Exception as e:
+                # Log the actual error for debugging
+                error_trace = traceback.format_exc()
+                logger.error(f"Encryption error for {field}: {str(e)}\n{error_trace}")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to encrypt API key. Please ensure ENCRYPTION_KEY is set in environment."
+                    detail=f"Failed to encrypt API key: {str(e)}"
                 )
 
     for field, value in update_data.items():
