@@ -15,6 +15,12 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [providers, setProviders] = useState<Record<string, LLMProvider>>({})
+  const [savingKeys, setSavingKeys] = useState({
+    anthropic: false,
+    openai: false,
+    google: false,
+    openrouter: false,
+  })
   const [formData, setFormData] = useState({
     llm_provider: 'anthropic',
     llm_model: '',
@@ -99,6 +105,39 @@ export default function Settings() {
       fetchSettings()
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to disconnect Google account')
+    }
+  }
+
+  const handleSaveApiKey = async (provider: 'anthropic' | 'openai' | 'google' | 'openrouter') => {
+    const keyFieldMap = {
+      anthropic: 'anthropic_api_key',
+      openai: 'openai_api_key',
+      google: 'google_api_key',
+      openrouter: 'openrouter_api_key',
+    }
+
+    const keyField = keyFieldMap[provider]
+    const apiKey = formData[keyField]
+
+    if (!apiKey) {
+      toast.error('Please enter an API key first')
+      return
+    }
+
+    setSavingKeys({ ...savingKeys, [provider]: true })
+
+    try {
+      const payload = { [keyField]: apiKey }
+      await apiClient.put('/api/settings', payload)
+      toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} API key saved!`)
+
+      // Clear the input field and refresh settings
+      setFormData({ ...formData, [keyField]: '' })
+      fetchSettings()
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to save API key')
+    } finally {
+      setSavingKeys({ ...savingKeys, [provider]: false })
     }
   }
 
@@ -218,14 +257,24 @@ export default function Settings() {
                     Anthropic API Key
                     {settings?.has_anthropic_key && <span className="ml-2 text-green-600 text-xs">✓ Configured</span>}
                   </label>
-                  <input
-                    type="password"
-                    name="anthropic_api_key"
-                    value={formData.anthropic_api_key}
-                    onChange={handleChange}
-                    placeholder={settings?.has_anthropic_key ? "Enter new key to update" : "sk-ant-..."}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="password"
+                      name="anthropic_api_key"
+                      value={formData.anthropic_api_key}
+                      onChange={handleChange}
+                      placeholder={settings?.has_anthropic_key ? "Enter new key to update" : "sk-ant-..."}
+                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveApiKey('anthropic')}
+                      disabled={savingKeys.anthropic || !formData.anthropic_api_key}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {savingKeys.anthropic ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Get one at{' '}
                     <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
@@ -239,14 +288,24 @@ export default function Settings() {
                     OpenAI API Key
                     {settings?.has_openai_key && <span className="ml-2 text-green-600 text-xs">✓ Configured</span>}
                   </label>
-                  <input
-                    type="password"
-                    name="openai_api_key"
-                    value={formData.openai_api_key}
-                    onChange={handleChange}
-                    placeholder={settings?.has_openai_key ? "Enter new key to update" : "sk-..."}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="password"
+                      name="openai_api_key"
+                      value={formData.openai_api_key}
+                      onChange={handleChange}
+                      placeholder={settings?.has_openai_key ? "Enter new key to update" : "sk-..."}
+                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveApiKey('openai')}
+                      disabled={savingKeys.openai || !formData.openai_api_key}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {savingKeys.openai ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Get one at{' '}
                     <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
@@ -260,14 +319,24 @@ export default function Settings() {
                     Google AI API Key
                     {settings?.has_google_key && <span className="ml-2 text-green-600 text-xs">✓ Configured</span>}
                   </label>
-                  <input
-                    type="password"
-                    name="google_api_key"
-                    value={formData.google_api_key}
-                    onChange={handleChange}
-                    placeholder={settings?.has_google_key ? "Enter new key to update" : "AIza..."}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="password"
+                      name="google_api_key"
+                      value={formData.google_api_key}
+                      onChange={handleChange}
+                      placeholder={settings?.has_google_key ? "Enter new key to update" : "AIza..."}
+                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveApiKey('google')}
+                      disabled={savingKeys.google || !formData.google_api_key}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {savingKeys.google ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Get one at{' '}
                     <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
@@ -281,14 +350,24 @@ export default function Settings() {
                     OpenRouter API Key
                     {settings?.has_openrouter_key && <span className="ml-2 text-green-600 text-xs">✓ Configured</span>}
                   </label>
-                  <input
-                    type="password"
-                    name="openrouter_api_key"
-                    value={formData.openrouter_api_key}
-                    onChange={handleChange}
-                    placeholder={settings?.has_openrouter_key ? "Enter new key to update" : "sk-or-..."}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="password"
+                      name="openrouter_api_key"
+                      value={formData.openrouter_api_key}
+                      onChange={handleChange}
+                      placeholder={settings?.has_openrouter_key ? "Enter new key to update" : "sk-or-..."}
+                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveApiKey('openrouter')}
+                      disabled={savingKeys.openrouter || !formData.openrouter_api_key}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {savingKeys.openrouter ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Get one at{' '}
                     <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
