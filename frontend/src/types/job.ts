@@ -28,6 +28,8 @@ export type Job = {
   work_mode?: string;
   salary_min?: number;
   salary_max?: number;
+  salary_currency?: string;
+  next_steps?: string;
   recruiter_name?: string;
   recruiter_email?: string;
   recruiter_phone?: string;

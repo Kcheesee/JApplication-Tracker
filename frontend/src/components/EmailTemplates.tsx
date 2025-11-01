@@ -115,7 +115,7 @@ export function EmailTemplates({ job }: EmailTemplatesProps) {
     const saved = localStorage.getItem('email_templates');
     return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
   });
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+  // const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);

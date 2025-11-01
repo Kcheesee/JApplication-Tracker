@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Mail, Briefcase, Trash2, MoreVertical } from 'lucide-react';
+import { ExternalLink, Mail, Briefcase, Trash2 } from 'lucide-react';
 import { Job, JobStatus } from '../types/job';
 import { Button } from './ui/button';
 import {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileText, FileSpreadsheet, FileJson, Printer } from 'lucide-react';
+import { Download, FileSpreadsheet, FileJson, Printer } from 'lucide-react';
 import { Button } from './ui/button';
 import { Job } from '../types/job';
 import { exportToCSV, exportToJSON, printPDFReport } from '../utils/exportUtils';

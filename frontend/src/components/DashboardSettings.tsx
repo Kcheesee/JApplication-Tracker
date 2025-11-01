@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, X, Eye, EyeOff } from 'lucide-react';
+import { Settings, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 

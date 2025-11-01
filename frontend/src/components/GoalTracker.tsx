@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Target, TrendingUp, Flame, Trophy, Edit2 } from 'lucide-react';
+import { useState } from 'react';
+import { Target, Flame, Trophy, Edit2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Job } from '../types/job';
