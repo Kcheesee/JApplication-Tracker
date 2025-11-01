@@ -7,6 +7,7 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -19,15 +20,42 @@ export default function Login() {
       toast.success('Logged in successfully!')
       navigate('/')
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Login failed')
+      const status = error.response?.status
+      const detail = error.response?.data?.detail
+
+      if (status === 404 || detail?.includes('not found')) {
+        toast.error('Account not found. Please check your username or sign up.')
+      } else if (status === 401) {
+        toast.error('Incorrect password. Please try again.')
+      } else {
+        toast.error(detail || 'Login failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const handleForgotPassword = async () => {
+    if (!username) {
+      toast.error('Please enter your username first')
+      return
+    }
+
+    // TODO: Implement password reset functionality
+    toast.success('Password reset link sent! (Feature coming soon)')
+    setShowForgotPassword(false)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <img
+            className="h-24 w-24"
+            src="/logo.png"
+            alt="Job Application Tracker"
+          />
+        </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Job Application Tracker
         </h2>
@@ -57,9 +85,20 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div className="text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              </div>
               <div className="mt-1">
                 <input
                   id="password"
@@ -98,6 +137,57 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowForgotPassword(false)}></div>
+
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Reset Password
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Enter your username to receive password reset instructions.
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Username"
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                >
+                  Send Reset Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
