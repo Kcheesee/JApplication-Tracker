@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
-from app.routes import auth, applications, sync, settings, llm, oauth
+from app.routes import auth, applications, sync, settings, llm, oauth, cron
 
 # Get settings
 app_settings = get_settings()
@@ -32,6 +32,7 @@ app.include_router(sync.router)
 app.include_router(settings.router)
 app.include_router(llm.router)
 app.include_router(oauth.router)
+app.include_router(cron.router)
 
 
 @app.on_event("startup")
