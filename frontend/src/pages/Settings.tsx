@@ -30,7 +30,7 @@ export default function Settings() {
     openrouter_api_key: '',
     gmail_enabled: true,
     gmail_search_days: 7,
-    gmail_auto_sync_enabled: false,
+    // gmail_auto_sync_enabled: false,  // Coming soon
     email_notifications: true,
   })
 
@@ -63,7 +63,7 @@ export default function Settings() {
         openrouter_api_key: '',
         gmail_enabled: response.data.gmail_enabled,
         gmail_search_days: response.data.gmail_search_days,
-        gmail_auto_sync_enabled: response.data.gmail_auto_sync_enabled || false,
+        // gmail_auto_sync_enabled: response.data.gmail_auto_sync_enabled || false,  // Coming soon
         email_notifications: response.data.email_notifications,
       })
     } catch (error) {
