@@ -95,10 +95,6 @@ export function AddJobDialog({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleJobExtracted = (jobData: Partial<Job>) => {
-    setFormData(prev => ({ ...prev, ...jobData }));
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -116,7 +112,7 @@ export function AddJobDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {!editingJob && (
             <>
-              <JobScraper onJobExtracted={handleJobExtracted} />
+              <JobScraper />
               <Separator className="my-4" />
             </>
           )}

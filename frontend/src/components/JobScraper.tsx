@@ -1,36 +1,9 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Loader2, Link as LinkIcon, Code, Copy, Check } from 'lucide-react';
-import { Job, JobStatus } from '../types/job';
+import { Code, Copy, Check, Link as LinkIcon } from 'lucide-react';
 
-interface JobScraperProps {
-  onJobExtracted: (jobData: Partial<Job>) => void;
-}
-
-export function JobScraper({ onJobExtracted }: JobScraperProps) {
-  const [url, setUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+export function JobScraper() {
   const [copied, setCopied] = useState(false);
-
-  const extractJobFromUrl = async () => {
-    if (!url.trim()) return;
-
-    setLoading(true);
-
-    try {
-      // Try to extract from URL patterns
-      const jobData = await scrapeJobDetails(url);
-      onJobExtracted(jobData);
-    } catch (error) {
-      console.error('Error extracting job details:', error);
-      alert('Could not automatically extract job details. Please fill in manually.');
-    } finally {
-      setLoading(false);
-      setUrl('');
-    }
-  };
 
   const bookmarkletCode = `javascript:(function(){
     const data = {
@@ -197,39 +170,4 @@ export function JobScraper({ onJobExtracted }: JobScraperProps) {
       </div>
     </div>
   );
-}
-
-// Helper function to scrape job details from URL
-async function scrapeJobDetails(url: string): Promise<Partial<Job>> {
-  // This would ideally use a backend scraping service
-  // For now, we'll extract what we can from the URL
-
-  const jobData: Partial<Job> = {
-    job_link: url,
-    status: 'Applied' as JobStatus,
-    appliedAt: new Date().toISOString(),
-    application_date: new Date().toISOString(),
-  };
-
-  // Extract source from URL
-  if (url.includes('linkedin.com')) {
-    jobData.source = 'LinkedIn';
-  } else if (url.includes('indeed.com')) {
-    jobData.source = 'Indeed';
-  } else if (url.includes('glassdoor.com')) {
-    jobData.source = 'Glassdoor';
-  } else if (url.includes('ziprecruiter.com')) {
-    jobData.source = 'ZipRecruiter';
-  } else if (url.includes('greenhouse.io')) {
-    jobData.source = 'Greenhouse';
-  } else if (url.includes('lever.co')) {
-    jobData.source = 'Lever';
-  } else {
-    jobData.source = 'Job Board';
-  }
-
-  // Note: Real scraping would require a backend service to avoid CORS
-  // For now, users should use the bookmarklet for full extraction
-
-  return jobData;
 }
