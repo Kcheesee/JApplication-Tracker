@@ -87,8 +87,9 @@ export function JobScraper() {
 
   return (
     <div className="space-y-6">
-      {/* URL Extraction - TEMPORARILY HIDDEN */}
-      {/* <div className="space-y-3">
+      {/* URL Extraction & Bookmarklet - TEMPORARILY HIDDEN */}
+      {/* <div className="space-y-6">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
           <LinkIcon className="h-4 w-4 text-gray-500" />
           <Label>Extract from Job Posting URL</Label>
@@ -118,9 +119,8 @@ export function JobScraper() {
         <p className="text-xs text-gray-500">
           Supports: LinkedIn, Indeed, Glassdoor, ZipRecruiter, and more
         </p>
-      </div> */}
+      </div>
 
-      {/* Bookmarklet */}
       <div className="space-y-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <div className="flex items-center gap-2">
           <Code className="h-4 w-4 text-indigo-600" />
@@ -167,6 +167,14 @@ export function JobScraper() {
             <li>Review and save the extracted information</li>
           </ol>
         </div>
+      </div>
+      </div> */}
+
+      {/* JobScraper temporarily disabled - coming soon! */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+        <p className="text-sm text-blue-800">
+          <strong>Quick Add from URL</strong> feature coming soon! For now, please fill in the form below.
+        </p>
       </div>
     </div>
   );
