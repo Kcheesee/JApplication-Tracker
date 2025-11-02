@@ -110,9 +110,10 @@ class GmailService:
             for message in all_messages:
                 msg_id = message['id']
                 email_data = self.get_email_data(msg_id)
-                if email_data:
+                if email_data and self._is_likely_job_email(email_data):
                     email_data_list.append(email_data)
 
+            print(f"Filtered to {len(email_data_list)} likely job-related emails")
             return email_data_list
 
         except Exception as e:
@@ -203,3 +204,61 @@ class GmailService:
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             return False
+
+    def _is_likely_job_email(self, email_data: Dict[str, Any]) -> bool:
+        """
+        Quick pre-filter to eliminate obvious non-job emails before expensive LLM processing
+        Returns True if email is likely job-related
+        """
+        subject = email_data.get('subject', '').lower()
+        sender = email_data.get('from', '').lower()
+        body = email_data.get('body', '').lower()[:500]  # Only check first 500 chars for speed
+
+        # Skip obvious spam/marketing patterns
+        spam_indicators = [
+            'unsubscribe',
+            'marketing',
+            'newsletter',
+            'promotional',
+            'sale',
+            'discount',
+            'free trial',
+            'limited time',
+            'act now'
+        ]
+
+        # Skip if sender is clearly automated marketing
+        spam_domains = ['marketing', 'newsletter', 'noreply@shopify', 'notifications@']
+
+        # Check for spam indicators
+        if any(indicator in subject or indicator in body for indicator in spam_indicators):
+            return False
+
+        if any(domain in sender for domain in spam_domains):
+            return False
+
+        # Positive indicators for job emails
+        job_indicators = [
+            'application',
+            'interview',
+            'position',
+            'candidate',
+            'recruiter',
+            'hiring',
+            'offer',
+            'opportunity',
+            'job posting',
+            'apply',
+            'resume',
+            'cv',
+            'screening',
+            'assessment',
+            'greenhouse',
+            'lever',
+            'workday',
+            'linkedin jobs',
+            'indeed'
+        ]
+
+        # Must have at least one strong job indicator
+        return any(indicator in subject or indicator in body for indicator in job_indicators)
