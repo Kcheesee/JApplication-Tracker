@@ -84,25 +84,35 @@ function extractResumeUrl(notes?: string): string | undefined {
   return match ? match[1].trim() : undefined;
 }
 
+// Validate URL format
+function isValidUrl(url?: string): boolean {
+  if (!url) return false;
+  // Check if it's a valid HTTP/HTTPS URL
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Extract portal URL (prefer specific portal URLs over generic job links)
 function extractPortalUrl(jobLink?: string, notes?: string): string | undefined {
   // Check notes first for portal URL
   if (notes) {
     const match = notes.match(/Portal:\s*(https?:\/\/[^\s]+)/i);
-    if (match) return match[1].trim();
+    if (match) {
+      const url = match[1].trim();
+      return isValidUrl(url) ? url : undefined;
+    }
   }
 
-  // Use job link as fallback if it looks like a portal
-  if (jobLink && (
-    jobLink.includes('greenhouse') ||
-    jobLink.includes('lever') ||
-    jobLink.includes('workday') ||
-    jobLink.includes('applicant')
-  )) {
+  // Use job link as fallback if it's valid
+  if (jobLink && isValidUrl(jobLink)) {
     return jobLink;
   }
 
-  return jobLink;
+  return undefined;
 }
 
 // Combine notes with resume info
@@ -126,6 +136,9 @@ function combineNotes(notes?: string, resumeLabel?: string, resumeUrl?: string):
  * Convert backend Application to frontend Job
  */
 export function backendToFrontend(app: BackendApplication): Job {
+  // Validate and clean job_link
+  const validJobLink = isValidUrl(app.job_link) ? app.job_link : undefined;
+
   return {
     id: app.id.toString(),
     company: app.company,
@@ -135,8 +148,8 @@ export function backendToFrontend(app: BackendApplication): Job {
     status: mapStatus(app.status),
     lastActivity: app.updated_at || app.created_at || new Date().toISOString(),
     emailLink: constructGmailLink(app.email_id),
-    postingUrl: app.job_link,
-    portalUrl: extractPortalUrl(app.job_link, app.notes),
+    postingUrl: validJobLink,
+    portalUrl: extractPortalUrl(validJobLink, app.notes),
     description: app.job_description || app.role_duties,
     notes: app.notes,
     resumeLabel: extractResumeLabel(app.notes),
@@ -158,7 +171,7 @@ export function backendToFrontend(app: BackendApplication): Job {
     company_size: app.company_size,
     industry: app.industry,
     application_deadline: app.application_deadline,
-    job_link: app.job_link,
+    job_link: validJobLink,
     created_at: app.created_at,
     updated_at: app.updated_at,
     user_id: app.user_id,
