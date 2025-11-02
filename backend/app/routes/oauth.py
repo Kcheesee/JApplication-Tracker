@@ -65,7 +65,7 @@ def google_authorize(
     # Generate authorization URL with user ID encoded in state
     authorization_url, state = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true',
+        include_granted_scopes='false',  # Only request Gmail scopes, not login scopes
         prompt='consent',  # Force consent screen to get refresh token
         state=f"user_{current_user.id}"  # Encode user ID in state
     )
