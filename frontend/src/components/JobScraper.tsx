@@ -114,8 +114,8 @@ export function JobScraper({ onJobExtracted }: JobScraperProps) {
 
   return (
     <div className="space-y-6">
-      {/* URL Extraction */}
-      <div className="space-y-3">
+      {/* URL Extraction - TEMPORARILY HIDDEN */}
+      {/* <div className="space-y-3">
         <div className="flex items-center gap-2">
           <LinkIcon className="h-4 w-4 text-gray-500" />
           <Label>Extract from Job Posting URL</Label>
@@ -145,7 +145,7 @@ export function JobScraper({ onJobExtracted }: JobScraperProps) {
         <p className="text-xs text-gray-500">
           Supports: LinkedIn, Indeed, Glassdoor, ZipRecruiter, and more
         </p>
-      </div>
+      </div> */}
 
       {/* Bookmarklet */}
       <div className="space-y-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
