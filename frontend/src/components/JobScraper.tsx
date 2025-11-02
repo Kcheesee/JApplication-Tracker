@@ -92,7 +92,7 @@ export function JobScraper({ onJobExtracted }: JobScraperProps) {
     }
 
     /* Open Job Tracker with extracted data */
-    const trackerUrl = 'http://localhost:3000/applications';
+    const trackerUrl = window.location.origin + '/applications';
     const params = new URLSearchParams({
       scraped: 'true',
       company: data.company,
