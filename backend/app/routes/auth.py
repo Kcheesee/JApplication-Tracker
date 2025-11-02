@@ -148,7 +148,7 @@ def google_login(request: Request):
     # Generate authorization URL
     authorization_url, state = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true',
+        include_granted_scopes='false',  # Only request login scopes, not Gmail scopes
         prompt='select_account'
     )
 
