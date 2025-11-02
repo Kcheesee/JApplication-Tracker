@@ -1,84 +1,60 @@
-# 🚀 Job Application Tracker
+# 🚀 Job Application Tracker v2.0
 
-> A powerful, feature-rich job application tracker to organize your job search and land your dream job faster.
+> A powerful, AI-powered job application tracker with Gmail sync, Google Sign In, and beautiful analytics to help you land your dream job faster.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
 
-Track every application, never miss a follow-up, and get hired faster with analytics, automation, and smart organization.
+Track every application, never miss a follow-up, and get hired faster with AI-powered automation, smart analytics, and seamless organization.
 
-## ✨ Features
+## ✨ Key Features
+
+### 🤖 **AI-Powered Automation**
+- **Gmail Sync**: Automatically import job applications from your inbox using Claude AI
+- **Smart Parsing**: Extracts company, position, salary, location, and more from emails
+- **Intelligent Filtering**: Pre-filters spam and non-job emails before processing
+- **Batch Processing**: Handles large email volumes with progress tracking
+
+### 🔐 **Modern Authentication**
+- **Google Sign In**: One-click authentication with your Google account
+- **Secure JWT Tokens**: Industry-standard authentication
+- **Multi-User Support**: Each user has their own private data
+- **OAuth 2.0**: Secure Gmail access without storing passwords
 
 ### 📊 **Powerful Dashboard Analytics**
-- **6 Customizable Stat Cards**: Track total applications, interviews, offers, response rate, pending, and rejections
-- **Visual Charts**: Status breakdown, application timeline (30 days), recent activity feed
-- **Customizable Widgets**: Hide widgets you don't want to see (e.g., hide rejections for positivity!)
-- **Real-Time Insights**: See your job search progress at a glance
+- **Real-Time Stats**: Track applications, interviews, offers, and response rates
+- **Visual Charts**: Status breakdown pie chart and 30-day timeline
+- **Activity Feed**: See recent changes and updates at a glance
+- **Goal Tracking**: Set weekly/monthly goals and track your streak
 
-### 🎯 **Goal Tracking & Motivation**
-- Set weekly and monthly application goals
-- Track your application streak (consecutive days)
-- Color-coded progress bars show how you're doing
-- Stay motivated with visual progress tracking
+### 💼 **Comprehensive Application Tracking**
+- **20+ Data Fields**: Company, position, salary, location, status, and more
+- **Status History Timeline**: See the complete journey of each application
+- **Bulk Actions**: Select and update multiple applications at once
+- **Interview Prep**: Store questions, notes, and company research
+- **Network Contacts**: Track referrals and recruiter relationships
 
-### 💰 **Salary Intelligence**
-- Compare salary offers across companies
-- See average, highest, and lowest offers
-- Visual bar charts sorted by compensation
-- Make informed decisions about offers
+### 📱 **Modern, Responsive UI**
+- **Beautiful Design**: Built with shadcn/ui and Tailwind CSS
+- **Mobile-Friendly**: Works perfectly on phones and tablets
+- **Smooth Animations**: Powered by Framer Motion
+- **Intuitive Navigation**: Easy to use, hard to get lost
 
-### 📧 **Email Templates & Communication**
-- 5 pre-written professional templates (follow-up, thank you, etc.)
-- Smart variable replacement: {company}, {position}, {recruiter_name}
-- Create unlimited custom templates
-- One-click copy to clipboard
-
-### 📅 **Calendar Integration**
-- Add interviews to Google Calendar with one click
-- Export to Outlook/Apple Calendar (.ics file)
-- Auto-populated with company, role, recruiter details
-- Never miss an interview again
-
-### 🤝 **Network Management**
-- Track referrals and LinkedIn connections
-- Store contact details: name, role, email, phone, LinkedIn
-- Link connections to specific job applications
-- Build and leverage your network
-
-### 🔍 **Auto-Extract Job Details**
-Three ways to add jobs quickly:
-
-1. **Gmail Sync**: Auto-import applications from your inbox
-2. **Bookmarklet**: One-click extract from any job posting
-3. **Browser Extension**: Chrome/Edge extension for instant capture
-
-Supports: LinkedIn, Indeed, Glassdoor, ZipRecruiter, Lever, Greenhouse, and more!
-
-### 📝 **Interview Preparation**
-- Store interview questions and answers
-- Take notes during/after interviews
-- Research and save company information
-- Dedicated "Interview Prep" tab for each application
-
-### 💾 **Data Export**
-- **CSV Export**: Open in Excel or Google Sheets (23+ fields)
-- **JSON Export**: Complete backup for re-importing
-- **PDF Reports**: Printable application summaries
-
-### 🎨 **Modern UI/UX**
-- Beautiful, responsive design (desktop & mobile)
-- Built with shadcn/ui and Tailwind CSS
-- Smooth animations with Framer Motion
-- Dark mode support (coming soon)
+### 🔄 **Data Management**
+- **Export Options**: CSV, JSON, and PDF exports
+- **Duplicate Detection**: Prevents adding the same job twice
+- **Advanced Search**: Find applications quickly with filters
+- **Bulk Operations**: Update or delete multiple applications at once
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed
-- 4GB of available RAM
-- Ports 3000, 8000, and 5432 available
+- Docker Desktop installed
+- Google Cloud Project (for Gmail sync - optional)
+- Anthropic API key (for AI parsing - optional)
 
 ### Installation
 
@@ -88,285 +64,357 @@ Supports: LinkedIn, Indeed, Glassdoor, ZipRecruiter, Lever, Greenhouse, and more
    cd job-application-tracker
    ```
 
-2. **Start the application**
+2. **Set up environment variables**
    ```bash
-   docker compose up -d
+   # Backend
+   cp backend/.env.example backend/.env
+
+   # Frontend
+   cp frontend/.env.example frontend/.env
    ```
 
-3. **Access the app**
+3. **Configure backend/.env**
+   ```env
+   # Database
+   DATABASE_URL=postgresql://postgres:password@localhost:5432/jobtracker
+
+   # Security
+   SECRET_KEY=your-super-secret-key-here
+
+   # API URLs
+   FRONTEND_URL=http://localhost:3000
+   BACKEND_URL=http://localhost:8000
+
+   # Optional: AI & Gmail (for advanced features)
+   ANTHROPIC_API_KEY=your-anthropic-api-key
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   ```
+
+4. **Configure frontend/.env**
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
+
+5. **Start with Docker**
+   ```bash
+   docker-compose up -d
+   ```
+
+6. **Access the app**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
 
-That's it! The application is now running. 🎉
+7. **Create an account**
+   - Navigate to http://localhost:3000
+   - Click "Register" to create your account
+   - Or use "Sign in with Google"
 
-### First-Time Setup
-
-1. Navigate to http://localhost:3000
-2. Click "Add Application" to create your first entry
-3. Or click "Sync Gmail" to import existing applications
-4. Explore the Dashboard to see your analytics
-
-## 📱 Browser Extension Setup
-
-Install the Chrome/Edge extension for one-click job capturing:
-
-1. Open Chrome and go to `chrome://extensions/`
-2. Enable "Developer mode" (top right)
-3. Click "Load unpacked"
-4. Select the `browser-extension` folder
-5. Pin the extension to your toolbar
-
-Now when you're on LinkedIn, Indeed, or any job board, just click the extension icon to instantly capture the job details!
+That's it! 🎉
 
 ## 📖 Usage Guide
 
-### Adding Applications
+### Getting Started
 
-**Method 1: Manual Entry**
-- Click "Add" button in Applications page
-- Fill in company, position, and other details
-- Optionally use the job scraper to paste a URL
+1. **Sign Up/Sign In**
+   - Use Google Sign In for quick access
+   - Or create an account with email/password
 
-**Method 2: Gmail Sync**
-- Click "Sync Gmail" button
-- Authenticate with Google
-- Your applications are automatically imported
+2. **Add Your First Application**
+   - Click "Add Application" button
+   - Fill in company, position, and other details
+   - Or use Gmail Sync to auto-import from your inbox
 
-**Method 3: Browser Extension**
-- Navigate to any job posting
-- Click the extension icon
-- Review and save
+3. **Set Up Gmail Sync (Optional)**
+   - Go to Settings
+   - Click "Connect Google Account"
+   - Authorize Gmail access
+   - Click "Sync Gmail" to import applications
+   - AI automatically extracts job details from emails
 
-### Tracking Progress
+4. **Track Your Progress**
+   - Dashboard shows real-time analytics
+   - Update application statuses as you progress
+   - View status history timeline for each application
+   - Use bulk actions to update multiple applications
 
-**Dashboard**: View your job search metrics
-- Total applications, interviews, offers
-- Response rate and pending applications
-- 30-day application timeline
-- Recent activity feed
+### Features Deep Dive
 
-**Goal Tracking**: Set targets and track streaks
-- Set weekly/monthly goals
-- See your streak counter
-- Progress bars show completion
+#### Gmail Sync
+The Gmail sync feature uses Claude AI to intelligently parse your job application emails:
+- Scans last 90 days of emails by default
+- Identifies job application confirmations
+- Extracts company, position, salary, location, etc.
+- Skips spam and non-job emails
+- Processes in batches to prevent data loss
+- Shows progress and error counts
 
-**Salary Comparison**: Analyze offers
-- Visual comparison of all offers
-- See which companies pay best
-- Make data-driven decisions
+#### Status History Timeline
+Every status change is tracked automatically:
+- See when you applied
+- Track when you moved to interview stage
+- Record offer or rejection dates
+- Visual timeline with icons and colors
 
-### Interview Preparation
+#### Bulk Actions
+Manage multiple applications efficiently:
+- Select applications with checkboxes
+- Update status for all selected at once
+- Delete multiple applications
+- Perfect for cleaning up old applications
 
-For each application, you can:
-- Store common interview questions
-- Take notes during/after interviews
-- Research the company (culture, products, news)
-- Access everything in the "Interview Prep" tab
-
-### Managing Contacts
-
-**Network Tracker**: Keep track of:
-- Referrals who helped you
-- LinkedIn connections
-- Recruiter contacts
-- Notes about each connection
+#### Interview Preparation
+For each application, store:
+- Common interview questions and your answers
+- Notes from interviews
+- Company research (culture, products, news)
+- Dedicated "Interview Prep" tab
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
 - React 18 with TypeScript
-- Tailwind CSS for styling
-- shadcn/ui components
-- Framer Motion animations
-- Vite for blazing-fast builds
+- Vite (build tool)
+- Tailwind CSS + shadcn/ui
+- Framer Motion (animations)
+- React Router (routing)
+- Axios (API client)
 
 **Backend:**
 - FastAPI (Python)
-- PostgreSQL database
-- SQLAlchemy ORM
-- Pydantic validation
-- Alembic migrations
+- PostgreSQL (database)
+- SQLAlchemy (ORM)
+- JWT Authentication
+- Anthropic Claude AI
+- Google Gmail API
 
 **Infrastructure:**
 - Docker & Docker Compose
-- Nginx (production)
+- PostgreSQL 15
 - Hot reload in development
 
 ## 📂 Project Structure
 
 ```
 job-application-tracker/
-├── frontend/              # React TypeScript app
+├── frontend/                 # React TypeScript app
 │   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Dashboard, Applications, Settings
-│   │   ├── types/         # TypeScript definitions
-│   │   └── utils/         # Helper functions
+│   │   ├── components/       # UI components
+│   │   │   ├── JobTable.tsx
+│   │   │   ├── StatusTimeline.tsx
+│   │   │   ├── BulkActionsToolbar.tsx
+│   │   │   └── ...
+│   │   ├── pages/            # Main pages
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Applications.tsx
+│   │   │   ├── Settings.tsx
+│   │   │   └── Login.tsx
+│   │   ├── context/          # React context
+│   │   └── lib/              # Utilities
 │   └── public/
-├── backend/               # FastAPI Python app
+├── backend/                  # FastAPI Python app
 │   ├── app/
-│   │   ├── api/           # API routes
-│   │   ├── models/        # Database models
-│   │   ├── schemas/       # Pydantic schemas
-│   │   └── services/      # Business logic
-│   └── alembic/           # Database migrations
-├── browser-extension/     # Chrome/Edge extension
-│   ├── manifest.json
-│   ├── popup.html
-│   ├── popup.js
-│   └── content.js
-└── docker-compose.yml     # Docker orchestration
+│   │   ├── routes/           # API endpoints
+│   │   │   ├── auth.py       # Authentication
+│   │   │   ├── oauth.py      # Google OAuth
+│   │   │   ├── applications.py
+│   │   │   └── sync.py       # Gmail sync
+│   │   ├── models/           # Database models
+│   │   ├── services/         # Business logic
+│   │   └── migrations/       # SQL migrations
+│   └── requirements.txt
+├── docs/                     # Documentation
+└── docker-compose.yml        # Docker orchestration
 ```
 
 ## 🔧 Development
 
-### Running Locally
+### Running Locally Without Docker
 
+**Backend:**
 ```bash
-# Start in development mode with hot reload
-docker compose up
-
-# View logs
-docker compose logs -f frontend
-docker compose logs -f backend
-
-# Rebuild containers
-docker compose up --build
-
-# Stop all services
-docker compose down
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
 ```
 
-### Database Migrations
-
+**Frontend:**
 ```bash
-# Create a new migration
-docker exec job-tracker-backend alembic revision --autogenerate -m "Description"
-
-# Apply migrations
-docker exec job-tracker-backend alembic upgrade head
-
-# Rollback migration
-docker exec job-tracker-backend alembic downgrade -1
+cd frontend
+npm install
+npm run dev
 ```
 
-### Running Tests
-
+**Database:**
 ```bash
-# Frontend tests
-docker exec job-tracker-frontend npm test
+# Install PostgreSQL locally
+# Create database
+createdb jobtracker
 
-# Backend tests
-docker exec job-tracker-backend pytest
-
-# Run with coverage
-docker exec job-tracker-backend pytest --cov
+# Run migrations
+cd backend
+psql jobtracker < migrations/001_initial_schema.sql
+psql jobtracker < migrations/002_add_status_history.sql
 ```
 
-## 🌟 Key Features Deep Dive
+### Building for Production
 
-### Gmail Sync
+**Frontend:**
+```bash
+cd frontend
+npm run build
+# Output in dist/ folder
+```
 
-The Gmail sync feature uses OAuth 2.0 to securely access your inbox and scan for job application emails. It looks for:
-- Application confirmations
-- "Thank you for applying" emails
-- Recruiter responses
-- Interview invitations
+**Backend:**
+```bash
+cd backend
+# Use gunicorn for production
+gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+```
 
-All emails are processed locally and never stored on external servers.
+## 🌐 Deployment
 
-### Job Scraper & Bookmarklet
+### Deploy to Render
 
-The scraper supports 15+ job boards and uses smart pattern matching to extract:
-- Company name
-- Job title/position
-- Location
-- Salary range (if listed)
-- Job description
-- Application source
+See [docs/setup/DEPLOY_TO_RENDER.md](docs/setup/DEPLOY_TO_RENDER.md) for detailed instructions.
 
-The bookmarklet works on any website and opens a new tab with pre-filled data.
+**Quick steps:**
+1. Create Render account
+2. Create PostgreSQL database
+3. Create Web Service for backend
+4. Create Static Site for frontend
+5. Set environment variables
+6. Deploy!
 
-### Browser Extension
+### Deploy to Railway
 
-The Chrome/Edge extension includes:
-- Content scripts that detect job posting pages
-- Auto-extraction of job details
-- Clean popup UI for review
-- Direct save to your tracker
-- Works on 10+ major job boards
+See [docs/setup/QUICKSTART_RAILWAY.md](docs/setup/QUICKSTART_RAILWAY.md) for Railway deployment.
 
-## 🔐 Privacy & Security
+### Deploy to Your Server
 
-- **Local-First**: All data stored in your PostgreSQL database
-- **No Cloud Storage**: We don't store your data on external servers
-- **OAuth 2.0**: Secure Google authentication for Gmail sync
-- **Environment Variables**: Sensitive credentials in .env files
-- **No Tracking**: We don't track your usage or collect analytics
+See [docs/setup/DEPLOYMENT.md](docs/setup/DEPLOYMENT.md) for self-hosting instructions.
+
+## 🔐 Setting Up Google OAuth
+
+### For Gmail Sync
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project or select existing
+3. Enable Gmail API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `http://localhost:8000/api/oauth/google/callback` (development)
+   - `https://your-domain.com/api/oauth/google/callback` (production)
+6. Copy Client ID and Client Secret to `backend/.env`
+
+### For Google Sign In
+
+1. Use the same Google Cloud project
+2. Add additional redirect URIs:
+   - `http://localhost:8000/api/auth/google/callback` (development)
+   - `https://your-domain.com/api/auth/google/callback` (production)
+3. Scopes needed: `openid`, `userinfo.email`, `userinfo.profile`
+
+See [docs/setup/GOOGLE_OAUTH_SETUP.md](docs/setup/GOOGLE_OAUTH_SETUP.md) for detailed setup.
 
 ## 🐛 Troubleshooting
 
-### Container won't start
+### Port already in use
 ```bash
-# Check if ports are in use
-lsof -i :3000
-lsof -i :8000
-lsof -i :5432
-
-# Remove old containers and restart
-docker compose down -v
-docker compose up -d
+# Find and kill process using port
+lsof -ti:3000 | xargs kill -9  # Frontend
+lsof -ti:8000 | xargs kill -9  # Backend
+lsof -ti:5432 | xargs kill -9  # PostgreSQL
 ```
 
 ### Database connection issues
 ```bash
-# Reset database
-docker compose down -v
-docker compose up -d
+# Reset Docker volumes
+docker-compose down -v
+docker-compose up -d
+
+# Or manually reset
+psql -U postgres -c "DROP DATABASE IF EXISTS jobtracker;"
+psql -U postgres -c "CREATE DATABASE jobtracker;"
 ```
 
 ### Gmail sync not working
-- Ensure you've set up Google OAuth credentials
-- Check `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
-- Verify redirect URI matches: `http://localhost:3000/auth/callback`
+- Verify Google OAuth credentials are correct
+- Check that redirect URIs match exactly
+- Ensure Gmail API is enabled in Google Cloud Console
+- Check backend logs for specific errors
 
-### Browser extension not loading
-- Make sure Developer mode is enabled
-- Check for console errors (F12)
-- Verify the tracker is running on localhost:8000
-- Try reloading the extension
+### Build errors
+```bash
+# Frontend
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+npm run build
 
-## 📝 Roadmap
+# Backend
+cd backend
+rm -rf __pycache__
+pip install -r requirements.txt --force-reinstall
+```
 
-### V3.0 (Planned)
-- [ ] AI-powered resume optimization
-- [ ] Mobile app (React Native)
-- [ ] Advanced analytics & insights
-- [ ] Interview scheduler with Zoom/Meet
-- [ ] ATS keyword scanner
-- [ ] Team collaboration features
+## 📝 What's New in v2.0
+
+### Major Features
+✅ Multi-user authentication with JWT
+✅ Google Sign In integration
+✅ Gmail sync with AI parsing
+✅ Status history timeline
+✅ Bulk actions (select, update, delete)
+✅ Mobile-responsive navigation
+✅ Enhanced dashboard analytics
+✅ Duplicate detection
+✅ Data export (CSV, JSON, PDF)
+
+### Improvements
+✅ Better error handling in Gmail sync
+✅ Batch commits to prevent data loss
+✅ Smart email pre-filtering
+✅ URL validation for job links
+✅ OAuth scope fixes
+✅ Single-click Google Sign In
+
+## 🗺️ Roadmap
+
+### Coming Soon (v2.1)
 - [ ] Dark mode
-- [ ] Multi-language support
+- [ ] Email templates with smart variables
+- [ ] Calendar integration (Google Calendar, Outlook)
+- [ ] Salary comparison charts
+- [ ] Application streak tracking
+- [ ] Customizable dashboard widgets
 
-### Community Requested
-- [ ] Notion integration
+### Future (v3.0)
+- [ ] Mobile app (React Native)
+- [ ] AI resume optimization
+- [ ] Interview scheduler
+- [ ] Browser extension
 - [ ] Slack/Discord notifications
-- [ ] API key for third-party integrations
-- [ ] Chrome Web Store publication
-- [ ] Self-hosted deployment guides
+- [ ] Team collaboration features
+- [ ] ATS keyword scanner
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Quick Contribution Guide
+We welcome contributions! Here's how:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Run tests: `npm test` (frontend) or `pytest` (backend)
+5. Commit: `git commit -m 'Add amazing feature'`
+6. Push: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
@@ -374,20 +422,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
-- [Lucide](https://lucide.dev/) for the icon set
-- [FastAPI](https://fastapi.tiangolo.com/) for the amazing Python framework
-- [Docker](https://www.docker.com/) for making deployment easy
+- [FastAPI](https://fastapi.tiangolo.com/) - Amazing Python framework
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful component library
+- [Anthropic Claude](https://www.anthropic.com/) - AI parsing
+- [Lucide Icons](https://lucide.dev/) - Icon set
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
 
 ## 💬 Support
 
-- **Documentation**: Check our [Wiki](https://github.com/yourusername/job-application-tracker/wiki)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/job-application-tracker/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/job-application-tracker/discussions)
+- **Documentation**: Check the `docs/` folder
 
 ## ⭐ Star History
 
-If this project helped you land a job, please consider giving it a star! ⭐
+If this project helped you land a job or made your job search easier, please consider giving it a star! ⭐
 
 ---
 
