@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 export function GoogleAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -25,7 +27,12 @@ export function GoogleAuthCallback() {
         // Fetch user info
         try {
           const response = await apiClient.get('/api/auth/me');
-          localStorage.setItem('user', JSON.stringify(response.data));
+          const userData = response.data;
+          localStorage.setItem('user', JSON.stringify(userData));
+
+          // Update AuthContext with user data
+          setUser(userData);
+
           toast.success('Signed in with Google successfully!');
           navigate('/');
         } catch (err) {
@@ -40,7 +47,7 @@ export function GoogleAuthCallback() {
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, setUser]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
