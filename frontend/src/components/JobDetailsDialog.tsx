@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { CalendarIntegration } from './CalendarIntegration';
+import { StatusTimeline } from './StatusTimeline';
 import { ExternalLink, Mail, Calendar, MapPin, DollarSign, Briefcase, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -108,8 +109,9 @@ export function JobDetailsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="interview">Interview Prep</TabsTrigger>
             <TabsTrigger value="resume">Resume</TabsTrigger>
           </TabsList>
@@ -336,6 +338,10 @@ export function JobDetailsDialog({
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="space-y-4">
+            <StatusTimeline applicationId={job.id} />
           </TabsContent>
 
           <TabsContent value="interview" className="space-y-4">

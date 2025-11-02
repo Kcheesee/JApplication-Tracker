@@ -72,6 +72,7 @@ class Application(Base):
 
     # Relationships
     user = relationship("User", back_populates="applications")
+    status_history = relationship("StatusHistory", back_populates="application", cascade="all, delete-orphan", order_by="StatusHistory.changed_at")
 
     def __repr__(self):
         return f"<Application(id={self.id}, company={self.company}, position={self.position}, status={self.status})>"

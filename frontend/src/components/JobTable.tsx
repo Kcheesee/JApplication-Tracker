@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Mail, Briefcase, Trash2 } from 'lucide-react';
+import { ExternalLink, Mail, Briefcase, Trash2, CheckSquare, Square } from 'lucide-react';
 import { Job, JobStatus } from '../types/job';
 import { Button } from './ui/button';
 import {
@@ -17,6 +17,9 @@ interface JobTableProps {
   onStatusChange: (jobId: string, newStatus: JobStatus) => void;
   onDelete: (jobId: string) => void;
   onMarkInterviewing: (jobId: string) => void;
+  selectedJobs?: Set<string>;
+  onToggleSelect?: (jobId: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 const statusColors: Record<JobStatus, string> = {
@@ -37,7 +40,13 @@ export function JobTable({
   onStatusChange,
   onDelete,
   onMarkInterviewing,
+  selectedJobs = new Set(),
+  onToggleSelect,
+  onToggleSelectAll,
 }: JobTableProps) {
+  const bulkSelectEnabled = onToggleSelect && onToggleSelectAll;
+  const allSelected = bulkSelectEnabled && jobs.length > 0 && jobs.every(job => selectedJobs.has(job.id));
+
   if (jobs.length === 0) {
     return (
       <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
@@ -55,6 +64,21 @@ export function JobTable({
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {bulkSelectEnabled && (
+              <th className="px-3 py-2 w-12">
+                <button
+                  onClick={onToggleSelectAll}
+                  className="flex items-center justify-center w-full hover:text-indigo-600"
+                  title={allSelected ? "Deselect all" : "Select all"}
+                >
+                  {allSelected ? (
+                    <CheckSquare className="h-5 w-5 text-indigo-600" />
+                  ) : (
+                    <Square className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </th>
+            )}
             <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Company
             </th>
@@ -76,15 +100,35 @@ export function JobTable({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {jobs.map((job, index) => (
-            <motion.tr
-              key={job.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-              className="hover:bg-gray-50 transition-colors"
-            >
-              <td className="px-2 sm:px-3 py-3 whitespace-nowrap">
+          {jobs.map((job, index) => {
+            const isSelected = selectedJobs.has(job.id);
+
+            return (
+              <motion.tr
+                key={job.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
+                className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-indigo-50' : ''}`}
+              >
+                {bulkSelectEnabled && (
+                  <td className="px-3 py-3 w-12">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSelect(job.id);
+                      }}
+                      className="flex items-center justify-center w-full hover:text-indigo-600"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="h-5 w-5 text-indigo-600" />
+                      ) : (
+                        <Square className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
+                  </td>
+                )}
+                <td className="px-2 sm:px-3 py-3 whitespace-nowrap">
                 <div className="text-xs sm:text-sm font-medium text-gray-900">
                   {job.company}
                 </div>
@@ -176,7 +220,8 @@ export function JobTable({
                 </div>
               </td>
             </motion.tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

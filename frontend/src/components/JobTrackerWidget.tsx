@@ -4,6 +4,7 @@ import { Search, Plus, RefreshCw, Mail, FileSpreadsheet, Inbox } from 'lucide-re
 import { Job, JobStatus } from '../types/job';
 import { QuickStartCard } from './QuickStartCard';
 import { JobTable } from './JobTable';
+import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { AddJobDialog } from './AddJobDialog';
 import { JobDetailsDialog } from './JobDetailsDialog';
 import { Button } from './ui/button';
@@ -42,6 +43,9 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
   // Connection states
   const [gmailConnected, setGmailConnected] = useState(false);
   const [sheetsConnected, setSheetsConnected] = useState(false);
+
+  // Bulk selection state
+  const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
 
   // Load data on mount
   useEffect(() => {
@@ -236,6 +240,81 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
     setAddDialogOpen(true);
   };
 
+  // Bulk selection handlers
+  const handleToggleSelect = (jobId: string) => {
+    setSelectedJobs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedJobs.size === filteredJobs.length) {
+      setSelectedJobs(new Set());
+    } else {
+      setSelectedJobs(new Set(filteredJobs.map(j => j.id)));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedJobs(new Set());
+  };
+
+  // Bulk actions
+  const handleBulkUpdateStatus = async (newStatus: JobStatus) => {
+    const selectedIds = Array.from(selectedJobs);
+    if (selectedIds.length === 0) return;
+
+    try {
+      const response = await apiClient.post('/api/applications/1/bulk-update-status', {
+        application_ids: selectedIds.map(id => parseInt(id)),
+        new_status: newStatus,
+      });
+
+      toast.success(`Updated ${response.data.updated_count} application(s)`);
+
+      if (response.data.errors && response.data.errors.length > 0) {
+        console.error('Bulk update errors:', response.data.errors);
+      }
+
+      await loadJobs();
+      setSelectedJobs(new Set());
+    } catch (error: any) {
+      console.error('Error in bulk status update:', error);
+      toast.error(error.response?.data?.detail || 'Failed to update applications');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Array.from(selectedJobs);
+    if (selectedIds.length === 0) return;
+
+    try {
+      const response = await apiClient.delete('/api/applications/bulk-delete', {
+        data: {
+          application_ids: selectedIds.map(id => parseInt(id)),
+        },
+      });
+
+      toast.success(`Deleted ${response.data.deleted_count} application(s)`);
+
+      if (response.data.errors && response.data.errors.length > 0) {
+        console.error('Bulk delete errors:', response.data.errors);
+      }
+
+      await loadJobs();
+      setSelectedJobs(new Set());
+    } catch (error: any) {
+      console.error('Error in bulk delete:', error);
+      toast.error(error.response?.data?.detail || 'Failed to delete applications');
+    }
+  };
+
   // Quick start needed?
   const showQuickStart = jobs.length === 0 && !loading;
 
@@ -332,6 +411,14 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
           </Button>
         </div>
 
+        {/* Bulk Actions Toolbar */}
+        <BulkActionsToolbar
+          selectedCount={selectedJobs.size}
+          onBulkUpdateStatus={handleBulkUpdateStatus}
+          onBulkDelete={handleBulkDelete}
+          onClearSelection={handleClearSelection}
+        />
+
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
@@ -353,6 +440,9 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteJob}
               onMarkInterviewing={handleMarkInterviewing}
+              selectedJobs={selectedJobs}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
             />
           </motion.div>
         )}
