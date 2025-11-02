@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
@@ -7,9 +7,17 @@ import Dashboard from './pages/Dashboard'
 import Applications from './pages/Applications'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
+import { GoogleAuthCallback } from './components/GoogleAuthCallback'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const location = useLocation();
+
+  // Check if this is a Google OAuth callback
+  const searchParams = new URLSearchParams(location.search);
+  if (searchParams.has('token') || searchParams.has('error')) {
+    return <GoogleAuthCallback />;
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
