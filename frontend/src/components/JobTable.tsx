@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Mail, Briefcase, Trash2, CheckSquare, Square } from 'lucide-react';
+import { ExternalLink, Mail, Briefcase, Trash2, CheckSquare, Square, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Job, JobStatus } from '../types/job';
 import { Button } from './ui/button';
 import {
@@ -11,6 +11,9 @@ import {
 } from './ui/select';
 import { format } from 'date-fns';
 
+export type SortField = 'company' | 'position' | 'status' | 'applicationDate' | 'lastActivity';
+export type SortDirection = 'asc' | 'desc' | null;
+
 interface JobTableProps {
   jobs: Job[];
   onJobClick: (job: Job) => void;
@@ -20,6 +23,9 @@ interface JobTableProps {
   selectedJobs?: Set<string>;
   onToggleSelect?: (jobId: string) => void;
   onToggleSelectAll?: () => void;
+  sortField?: SortField | null;
+  sortDirection?: SortDirection;
+  onSort?: (field: SortField) => void;
 }
 
 const statusColors: Record<JobStatus, string> = {
@@ -43,9 +49,35 @@ export function JobTable({
   selectedJobs = new Set(),
   onToggleSelect,
   onToggleSelectAll,
+  sortField = null,
+  sortDirection = null,
+  onSort,
 }: JobTableProps) {
   const bulkSelectEnabled = onToggleSelect && onToggleSelectAll;
   const allSelected = bulkSelectEnabled && jobs.length > 0 && jobs.every(job => selectedJobs.has(job.id));
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ArrowUp className="h-4 w-4 text-indigo-600" />
+    ) : (
+      <ArrowDown className="h-4 w-4 text-indigo-600" />
+    );
+  };
+
+  const SortableHeader = ({ field, children, className = "" }: { field: SortField; children: React.ReactNode; className?: string }) => (
+    <th className={className}>
+      <button
+        onClick={() => onSort?.(field)}
+        className="flex items-center gap-1 hover:text-indigo-600 transition-colors w-full text-left"
+      >
+        <span>{children}</span>
+        <SortIcon field={field} />
+      </button>
+    </th>
+  );
 
   if (jobs.length === 0) {
     return (
@@ -79,21 +111,36 @@ export function JobTable({
                 </button>
               </th>
             )}
-            <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <SortableHeader
+              field="company"
+              className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
               Company
-            </th>
-            <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </SortableHeader>
+            <SortableHeader
+              field="position"
+              className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
               Role
-            </th>
-            <th className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </SortableHeader>
+            <SortableHeader
+              field="status"
+              className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
               Status
-            </th>
-            <th className="hidden sm:table-cell px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </SortableHeader>
+            <SortableHeader
+              field="applicationDate"
+              className="hidden sm:table-cell px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
               Applied
-            </th>
-            <th className="hidden md:table-cell px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </SortableHeader>
+            <SortableHeader
+              field="lastActivity"
+              className="hidden md:table-cell px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
               Last Activity
-            </th>
+            </SortableHeader>
             <th className="px-2 sm:px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, Plus, RefreshCw, Mail, FileSpreadsheet, Inbox } from 'lucide-react';
 import { Job, JobStatus } from '../types/job';
 import { QuickStartCard } from './QuickStartCard';
-import { JobTable } from './JobTable';
+import { JobTable, SortField, SortDirection } from './JobTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { AddJobDialog } from './AddJobDialog';
 import { JobDetailsDialog } from './JobDetailsDialog';
@@ -47,17 +47,62 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
   // Bulk selection state
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
 
+  // Sort state
+  const [sortField, setSortField] = useState<SortField | null>('applicationDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
   // Load data on mount
   useEffect(() => {
     loadJobs();
     checkConnections();
   }, []);
 
-  // Apply filters whenever jobs, search, or filter changes
+  // Apply filters and sorting whenever jobs, search, filter, or sort changes
   useEffect(() => {
-    const filtered = filterJobsUtil(jobs, searchQuery, statusFilter);
+    let filtered = filterJobsUtil(jobs, searchQuery, statusFilter);
+
+    // Apply sorting
+    if (sortField && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortField) {
+          case 'company':
+            aValue = a.company?.toLowerCase() || '';
+            bValue = b.company?.toLowerCase() || '';
+            break;
+          case 'position':
+            aValue = a.position?.toLowerCase() || '';
+            bValue = b.position?.toLowerCase() || '';
+            break;
+          case 'status':
+            aValue = a.status || '';
+            bValue = b.status || '';
+            break;
+          case 'applicationDate':
+            aValue = a.application_date ? new Date(a.application_date).getTime() : 0;
+            bValue = b.application_date ? new Date(b.application_date).getTime() : 0;
+            break;
+          case 'lastActivity':
+            // Use most recent of interview_date, updated_at, or application_date
+            const aDate = a.interview_date || a.updated_at || a.application_date;
+            const bDate = b.interview_date || b.updated_at || b.application_date;
+            aValue = aDate ? new Date(aDate).getTime() : 0;
+            bValue = bDate ? new Date(bDate).getTime() : 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
     setFilteredJobs(filtered);
-  }, [jobs, searchQuery, statusFilter]);
+  }, [jobs, searchQuery, statusFilter, sortField, sortDirection]);
 
   // Load jobs from backend
   const loadJobs = async () => {
@@ -238,6 +283,25 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
   const handleAddNew = () => {
     setEditingJob(null);
     setAddDialogOpen(true);
+  };
+
+  // Sort handler
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction: asc -> desc -> null -> asc
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortField(null);
+        setSortDirection(null);
+      } else {
+        setSortDirection('asc');
+      }
+    } else {
+      // New field, start with ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
   // Bulk selection handlers
@@ -443,6 +507,9 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
               selectedJobs={selectedJobs}
               onToggleSelect={handleToggleSelect}
               onToggleSelectAll={handleToggleSelectAll}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
           </motion.div>
         )}
