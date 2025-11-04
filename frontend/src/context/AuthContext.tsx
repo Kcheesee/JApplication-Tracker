@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   register: (email: string, username: string, password: string, fullName?: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
   setUser: (user: User) => void
 }
 
@@ -24,86 +24,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in (fetch current user from backend)
-    const checkAuth = async () => {
-      try {
-        // First check localStorage for backwards compatibility
-        const savedUser = localStorage.getItem('user')
-        if (savedUser) {
-          setUser(JSON.parse(savedUser))
-        }
+    // Check if user is logged in
+    const token = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
 
-        // Try to fetch current user (validates cookie/token)
-        const response = await apiClient.get('/api/auth/me')
-        setUser(response.data)
-        localStorage.setItem('user', JSON.stringify(response.data))
-      } catch (error) {
-        // Not authenticated or token expired
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser))
     }
-
-    checkAuth()
+    setLoading(false)
   }, [])
 
   const login = async (username: string, password: string) => {
-    try {
-      const formData = new FormData()
-      formData.append('username', username)
-      formData.append('password', password)
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('password', password)
 
-      const response = await apiClient.post('/api/auth/login', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+    const response = await apiClient.post('/api/auth/login', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
 
-      const { access_token, user } = response.data
-
-      // Store token for backwards compatibility (backend now uses cookies)
-      localStorage.setItem('token', access_token)
-      localStorage.setItem('user', JSON.stringify(user))
-      setUser(user)
-    } catch (error: any) {
-      // Re-throw with user-friendly message
-      const message = error.response?.data?.detail || 'Login failed. Please check your credentials.'
-      throw new Error(message)
-    }
+    const { access_token, user } = response.data
+    localStorage.setItem('token', access_token)
+    localStorage.setItem('user', JSON.stringify(user))
+    setUser(user)
   }
 
   const register = async (email: string, username: string, password: string, fullName?: string) => {
-    try {
-      await apiClient.post('/api/auth/register', {
-        email,
-        username,
-        password,
-        full_name: fullName,
-      })
+    await apiClient.post('/api/auth/register', {
+      email,
+      username,
+      password,
+      full_name: fullName,
+    })
 
-      // Auto-login after registration
-      await login(username, password)
-    } catch (error: any) {
-      // Re-throw with user-friendly message
-      const message = error.response?.data?.detail || 'Registration failed. Please try again.'
-      throw new Error(message)
-    }
+    // Auto-login after registration
+    await login(username, password)
   }
 
-  const logout = async () => {
-    try {
-      // Call backend logout endpoint to clear httpOnly cookie
-      await apiClient.post('/api/auth/logout')
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      // Clear local storage and state regardless of backend response
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      setUser(null)
-      window.location.href = '/login'
-    }
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setUser(null)
+    window.location.href = '/login'
   }
 
   return (

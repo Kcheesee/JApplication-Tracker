@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export function GoogleAuthCallback() {
   const [searchParams] = useSearchParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const { setUser } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
+      const token = searchParams.get('token');
       const error = searchParams.get('error');
 
       if (error) {
@@ -20,18 +20,9 @@ export function GoogleAuthCallback() {
         return;
       }
 
-      // Extract token from URL fragment (hash) - more secure than query params
-      // Format: /#token=eyJ...
-      const hash = location.hash;
-      const tokenMatch = hash.match(/token=([^&]+)/);
-      const token = tokenMatch ? tokenMatch[1] : null;
-
       if (token) {
-        // Save token for authentication
+        // Save token
         localStorage.setItem('token', token);
-
-        // Clear the token from URL immediately for security
-        window.history.replaceState(null, '', location.pathname);
 
         // Fetch user info
         try {
@@ -45,19 +36,18 @@ export function GoogleAuthCallback() {
           toast.success('Signed in with Google successfully!');
           navigate('/');
         } catch (err) {
-          console.error('Error fetching user after Google sign in:', err);
+          console.error('Error fetching user:', err);
           toast.error('Failed to complete sign in');
           navigate('/login');
         }
       } else {
-        // No token found, redirect to login
-        console.error('No token found in Google OAuth callback');
+        // No token, redirect to login
         navigate('/login');
       }
     };
 
     handleCallback();
-  }, [searchParams, location, navigate, setUser]);
+  }, [searchParams, navigate, setUser]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
