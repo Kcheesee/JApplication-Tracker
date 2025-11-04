@@ -11,7 +11,7 @@ export function GoogleAuthCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const token = searchParams.get('token');
+      const authSuccess = searchParams.get('auth');
       const error = searchParams.get('error');
 
       if (error) {
@@ -20,11 +20,9 @@ export function GoogleAuthCallback() {
         return;
       }
 
-      if (token) {
-        // Save token
-        localStorage.setItem('token', token);
-
-        // Fetch user info
+      if (authSuccess === 'success') {
+        // Authentication cookie is already set by backend
+        // Fetch user info to update context
         try {
           const response = await apiClient.get('/api/auth/me');
           const userData = response.data;
@@ -36,12 +34,12 @@ export function GoogleAuthCallback() {
           toast.success('Signed in with Google successfully!');
           navigate('/');
         } catch (err) {
-          console.error('Error fetching user:', err);
+          console.error('Error fetching user after Google sign in:', err);
           toast.error('Failed to complete sign in');
           navigate('/login');
         }
       } else {
-        // No token, redirect to login
+        // No success param, redirect to login
         navigate('/login');
       }
     };

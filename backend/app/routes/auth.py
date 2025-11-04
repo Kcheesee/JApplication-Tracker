@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -6,12 +6,16 @@ from datetime import timedelta
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import os
+import logging
 from ..database import get_db
 from ..models.user import User
 from ..models.user_settings import UserSettings
 from ..schemas.user import UserCreate, UserResponse, Token
 from ..auth.security import get_password_hash, verify_password, create_access_token, get_current_user
 from ..config import get_settings
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 settings = get_settings()
@@ -23,16 +27,63 @@ GOOGLE_LOGIN_SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile'
 ]
 
+# Cookie settings for secure token storage
+COOKIE_NAME = "access_token"
+COOKIE_MAX_AGE = 30 * 60  # 30 minutes in seconds
+
+
+def create_default_user_settings(user_id: int, db: Session) -> UserSettings:
+    """
+    Create default settings for a new user
+    Extracted to avoid code duplication
+    """
+    user_settings = UserSettings(
+        user_id=user_id,
+        gmail_keywords=[
+            "application",
+            "interview",
+            "position",
+            "unfortunately",
+            "offer",
+            "candidate",
+            "application status",
+            "thank you for applying",
+            "next steps",
+            "recruiter"
+        ]
+    )
+    db.add(user_settings)
+    db.commit()
+    return user_settings
+
+
+def set_auth_cookie(response: Response, token: str) -> None:
+    """
+    Set httpOnly cookie with JWT token for secure storage
+    """
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=token,
+        max_age=COOKIE_MAX_AGE,
+        httponly=True,  # Prevents JavaScript access (XSS protection)
+        secure=settings.ENVIRONMENT == "production",  # HTTPS only in production
+        samesite="lax",  # CSRF protection
+        path="/"
+    )
+
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
+    logger.info(f"Registration attempt for username: {user_data.username}")
+
     # Check if user already exists
     existing_user = db.query(User).filter(
         (User.email == user_data.email) | (User.username == user_data.username)
     ).first()
 
     if existing_user:
+        logger.warning(f"Registration failed - email or username already exists: {user_data.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email or username already registered"
@@ -51,35 +102,27 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    # Create default settings for the user
-    user_settings = UserSettings(
-        user_id=new_user.id,
-        gmail_keywords=[
-            "application",
-            "interview",
-            "position",
-            "unfortunately",
-            "offer",
-            "candidate",
-            "application status",
-            "thank you for applying",
-            "next steps",
-            "recruiter"
-        ]
-    )
-    db.add(user_settings)
-    db.commit()
+    # Create default settings using helper function
+    create_default_user_settings(new_user.id, db)
 
+    logger.info(f"User registered successfully: {new_user.id}")
     return new_user
 
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    """Login and get access token"""
+def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """Login and get access token (also sets httpOnly cookie)"""
+    logger.info(f"Login attempt for username: {form_data.username}")
+
     # Find user by username
     user = db.query(User).filter(User.username == form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
+        logger.warning(f"Failed login attempt for username: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -87,6 +130,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         )
 
     if not user.is_active:
+        logger.warning(f"Inactive user login attempt: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
@@ -99,6 +143,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         expires_delta=access_token_expires
     )
 
+    # Set secure httpOnly cookie
+    set_auth_cookie(response, access_token)
+
+    logger.info(f"User logged in successfully: {user.id}")
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -110,6 +159,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
     return current_user
+
+
+@router.post("/logout")
+def logout(response: Response):
+    """Logout user by clearing the authentication cookie"""
+    response.delete_cookie(key=COOKIE_NAME, path="/")
+    logger.info("User logged out")
+    return {"message": "Logged out successfully"}
 
 
 @router.get("/google/login")
@@ -159,7 +216,7 @@ def google_login(request: Request):
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     """
     Handle Google OAuth callback
-    Creates or logs in user, returns JWT token
+    Creates or logs in user, sets secure httpOnly cookie
     """
     client_id = os.getenv('GOOGLE_CLIENT_ID')
     client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
@@ -191,13 +248,16 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
         email = user_info.get('email')
         google_id = user_info.get('id')
-        name = user_info.get('name', email.split('@')[0])
+        name = user_info.get('name', email.split('@')[0] if email else 'user')
 
         if not email:
+            logger.error("Google OAuth: Could not get email from user info")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Could not get email from Google"
             )
+
+        logger.info(f"Google OAuth: Processing login for email: {email}")
 
         # Check if user exists
         user = db.query(User).filter(User.email == email).first()
@@ -223,20 +283,12 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             db.commit()
             db.refresh(user)
 
-            # Create default settings
-            user_settings = UserSettings(
-                user_id=user.id,
-                gmail_keywords=[
-                    "application",
-                    "interview",
-                    "position",
-                    "unfortunately",
-                    "offer",
-                    "candidate"
-                ]
-            )
-            db.add(user_settings)
-            db.commit()
+            # Create default settings using helper function
+            create_default_user_settings(user.id, db)
+
+            logger.info(f"Google OAuth: Created new user {user.id}")
+        else:
+            logger.info(f"Google OAuth: Existing user login {user.id}")
 
         # Create access token
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -245,13 +297,14 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             expires_delta=access_token_expires
         )
 
-        # Redirect to frontend with token
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/?token={access_token}"
-        )
+        # Create response with secure cookie (NO TOKEN IN URL!)
+        response = RedirectResponse(url=f"{settings.FRONTEND_URL}/?auth=success")
+        set_auth_cookie(response, access_token)
+
+        return response
 
     except Exception as e:
-        print(f"Google auth error: {str(e)}")
+        logger.error(f"Google OAuth error: {str(e)}", exc_info=True)
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/login?error=google_auth_failed"
         )
