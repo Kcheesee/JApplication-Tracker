@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from typing import Dict, Any
+import logging
 from ..database import get_db
 from ..models.user import User
 from ..models.application import Application
@@ -11,6 +12,7 @@ from ..services.llm_service import LLMService
 from ..config import get_settings as get_app_settings
 from ..utils.api_key_helper import get_llm_api_key
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sync", tags=["Sync"])
 
 
@@ -99,13 +101,13 @@ def sync_gmail(
     error_count = 0
     batch_size = 10  # Commit every 10 applications to avoid losing all progress
 
-    print(f"Starting to process {len(emails)} emails for user {current_user.id}")
+    logger.info(f"Gmail sync: Starting to process {len(emails)} emails for user {current_user.id}")
 
     for idx, email in enumerate(emails, 1):
         try:
             # Progress logging every 10 emails
             if idx % 10 == 0:
-                print(f"Progress: {idx}/{len(emails)} emails processed. New: {new_count}, Updated: {updated_count}, Skipped: {skipped_count}, Errors: {error_count}")
+                logger.info(f"Gmail sync progress: {idx}/{len(emails)} emails processed. New: {new_count}, Updated: {updated_count}, Skipped: {skipped_count}, Errors: {error_count}")
 
             # Parse email with configured LLM provider
             job_data = llm_service.parse_job_email(
@@ -120,7 +122,7 @@ def sync_gmail(
 
             # Validate required fields (only company is required, position is optional)
             if not job_data.get('company'):
-                print(f"Skipping email - missing company: {email['subject']}")
+                logger.debug(f"Gmail sync: Skipping email - missing company: {email['subject']}")
                 skipped_count += 1
                 continue
 
@@ -171,14 +173,16 @@ def sync_gmail(
             if (new_count + updated_count) % batch_size == 0:
                 try:
                     db.commit()
-                    print(f"Batch commit: Saved {batch_size} applications")
+                    logger.info(f"Gmail sync: Batch commit - Saved {batch_size} applications")
                 except Exception as commit_error:
-                    print(f"Error committing batch: {str(commit_error)}")
+                    logger.error(f"Gmail sync: Error committing batch: {str(commit_error)}")
                     db.rollback()
                     error_count += 1
 
         except Exception as e:
-            print(f"Error processing email '{email.get('subject', 'N/A')}': {str(e)}")
+            # Sanitize email subject to avoid logging sensitive data
+            subject_preview = email.get('subject', 'N/A')[:50] + '...' if len(email.get('subject', '')) > 50 else email.get('subject', 'N/A')
+            logger.error(f"Gmail sync: Error processing email '{subject_preview}': {str(e)}")
             error_count += 1
             # Continue processing other emails even if one fails
             continue
@@ -186,16 +190,16 @@ def sync_gmail(
     # Final commit for any remaining applications
     try:
         db.commit()
-        print(f"Final commit: All remaining applications saved")
+        logger.info(f"Gmail sync: Final commit - All remaining applications saved")
     except Exception as e:
-        print(f"Error in final commit: {str(e)}")
+        logger.error(f"Gmail sync: Error in final commit: {str(e)}")
         db.rollback()
 
     # Update stored token (in case it was refreshed)
     settings.google_token = gmail_service.get_updated_token()
     db.commit()
 
-    print(f"Sync complete: New: {new_count}, Updated: {updated_count}, Skipped: {skipped_count}, Errors: {error_count}")
+    logger.info(f"Gmail sync complete for user {current_user.id}: New: {new_count}, Updated: {updated_count}, Skipped: {skipped_count}, Errors: {error_count}")
 
     return {
         "success": True,

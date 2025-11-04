@@ -7,9 +7,11 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // Important: Send cookies with requests
 })
 
-// Add auth token to requests
+// Add auth token to requests (for backwards compatibility with Bearer tokens)
+// The backend now primarily uses httpOnly cookies, but still supports Bearer tokens
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -18,14 +20,19 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401 errors
+// Handle 401 errors and redirect to login
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Clear any stored tokens
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      window.location.href = '/login'
+
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

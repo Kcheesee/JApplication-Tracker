@@ -3,8 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
 from app.routes import auth, applications, sync, settings, llm, oauth, cron
+import logging
+import sys
 
-# Get settings
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Get settings (will validate on startup)
 app_settings = get_settings()
 
 # Create FastAPI app
@@ -16,13 +28,27 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
-# Configure CORS
+# Configure CORS - more restrictive settings
+# Note: Remove "chrome-extension://*" wildcard - specify exact extension IDs if needed
+allowed_origins = [
+    app_settings.FRONTEND_URL,
+]
+
+# Add localhost for development
+if app_settings.ENVIRONMENT == "development":
+    allowed_origins.extend([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ])
+    logger.warning("Running in development mode with relaxed CORS settings")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[app_settings.FRONTEND_URL, "http://localhost:3000", "chrome-extension://*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=True,  # Required for cookies
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicit methods
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Include routers
@@ -38,7 +64,19 @@ app.include_router(cron.router)
 @app.on_event("startup")
 def startup_event():
     """Initialize database on startup"""
-    init_db()
+    logger.info("="*60)
+    logger.info("Job Application Tracker API Starting")
+    logger.info(f"Version: 2.0.0")
+    logger.info(f"Environment: {app_settings.ENVIRONMENT}")
+    logger.info(f"Frontend URL: {app_settings.FRONTEND_URL}")
+    logger.info("="*60)
+
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}", exc_info=True)
+        raise
 
 
 @app.get("/")
