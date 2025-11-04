@@ -139,10 +139,18 @@ This document outlines the critical security fixes and code quality improvements
 
 ### For Existing Users
 The authentication changes are **backwards compatible**:
-- Backend accepts both cookies AND Bearer tokens
-- Frontend still stores tokens in localStorage for compatibility
+- Backend accepts both httpOnly cookies AND Bearer tokens
+- Frontend stores tokens in localStorage (works for cross-domain setups)
 - No immediate action required for existing deployments
-- Recommend clearing localStorage and re-logging in to fully use httpOnly cookies
+
+### Cross-Domain Deployments (Render, Vercel, etc.)
+For production environments where frontend and backend are on different domains:
+- **httpOnly cookies have limitations** across different domains
+- **Solution:** Token passed via URL fragment (#token=...) during OAuth callback
+  - URL fragments are NOT sent to servers (more secure than query params)
+  - Frontend immediately clears token from URL
+  - Token stored in localStorage for subsequent requests
+- **Same-domain deployments** can use httpOnly cookies for maximum security
 
 ### For New Deployments
 1. **REQUIRED:** Set SECRET_KEY to a secure random value (32+ chars)

@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export function GoogleAuthCallback() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { setUser } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
-      const authSuccess = searchParams.get('auth');
       const error = searchParams.get('error');
 
       if (error) {
@@ -20,9 +20,20 @@ export function GoogleAuthCallback() {
         return;
       }
 
-      if (authSuccess === 'success') {
-        // Authentication cookie is already set by backend
-        // Fetch user info to update context
+      // Extract token from URL fragment (hash) - more secure than query params
+      // Format: /#token=eyJ...
+      const hash = location.hash;
+      const tokenMatch = hash.match(/token=([^&]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (token) {
+        // Save token for authentication
+        localStorage.setItem('token', token);
+
+        // Clear the token from URL immediately for security
+        window.history.replaceState(null, '', location.pathname);
+
+        // Fetch user info
         try {
           const response = await apiClient.get('/api/auth/me');
           const userData = response.data;
@@ -39,13 +50,14 @@ export function GoogleAuthCallback() {
           navigate('/login');
         }
       } else {
-        // No success param, redirect to login
+        // No token found, redirect to login
+        console.error('No token found in Google OAuth callback');
         navigate('/login');
       }
     };
 
     handleCallback();
-  }, [searchParams, navigate, setUser]);
+  }, [searchParams, location, navigate, setUser]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
