@@ -13,9 +13,12 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const location = useLocation();
 
-  // Check if this is a Google OAuth callback
+  // Check if this is a Google OAuth callback (token in hash or query params)
   const searchParams = new URLSearchParams(location.search);
-  if (searchParams.has('token') || searchParams.has('error')) {
+  const hasTokenInQuery = searchParams.has('token') || searchParams.has('error');
+  const hasTokenInHash = location.hash.includes('token=');
+
+  if (hasTokenInQuery || hasTokenInHash) {
     return <GoogleAuthCallback />;
   }
 
