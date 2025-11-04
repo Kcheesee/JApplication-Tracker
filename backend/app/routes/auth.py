@@ -60,14 +60,21 @@ def create_default_user_settings(user_id: int, db: Session) -> UserSettings:
 def set_auth_cookie(response: Response, token: str) -> None:
     """
     Set httpOnly cookie with JWT token for secure storage
+
+    Note: For cross-domain setups (frontend and backend on different domains),
+    cookies require samesite="none" and secure=True, but this requires HTTPS.
     """
+    # For production with separate frontend/backend domains, use samesite="none"
+    # For same-domain setups or development, use samesite="lax"
+    is_production = settings.ENVIRONMENT == "production"
+
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         max_age=COOKIE_MAX_AGE,
         httponly=True,  # Prevents JavaScript access (XSS protection)
-        secure=settings.ENVIRONMENT == "production",  # HTTPS only in production
-        samesite="lax",  # CSRF protection
+        secure=is_production,  # HTTPS only in production
+        samesite="none" if is_production else "lax",  # "none" required for cross-domain
         path="/"
     )
 
@@ -297,8 +304,12 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             expires_delta=access_token_expires
         )
 
-        # Create response with secure cookie (NO TOKEN IN URL!)
-        response = RedirectResponse(url=f"{settings.FRONTEND_URL}/?auth=success")
+        # For cross-domain production deployments, httpOnly cookies don't work well
+        # So we pass the token as a URL fragment (not query param) for better security
+        # The fragment (#) is not sent to the server and is only accessible client-side
+        response = RedirectResponse(url=f"{settings.FRONTEND_URL}/#token={access_token}")
+
+        # Still set the cookie for same-domain setups
         set_auth_cookie(response, access_token)
 
         return response
