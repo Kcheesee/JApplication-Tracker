@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
 class ApplicationBase(BaseModel):
@@ -86,3 +86,8 @@ class ApplicationResponse(ApplicationBase):
 
     class Config:
         from_attributes = True
+
+
+class BulkDeleteRequest(BaseModel):
+    """Schema for bulk delete request"""
+    application_ids: List[int]

@@ -5,7 +5,7 @@ from ..database import get_db
 from ..models.user import User
 from ..models.application import Application
 from ..models.status_history import StatusHistory
-from ..schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse
+from ..schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse, BulkDeleteRequest
 from ..auth.security import get_current_user
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
@@ -261,7 +261,7 @@ def bulk_update_status(
 
 @router.delete("/bulk-delete")
 def bulk_delete_applications(
-    application_ids: List[int] = Body(..., embed=True),
+    request: BulkDeleteRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -269,7 +269,7 @@ def bulk_delete_applications(
     deleted_count = 0
     errors = []
 
-    for app_id in application_ids:
+    for app_id in request.application_ids:
         try:
             application = db.query(Application).filter(
                 Application.id == app_id,
