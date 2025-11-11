@@ -39,6 +39,11 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
 
   const maxCount = Math.max(...dateRange.map(d => d.count), 1);
 
+  // Use a baseline that's 50% of max to create better visual contrast
+  // This prevents the "all bars same height" problem when variance is low
+  const baseline = maxCount > 5 ? Math.ceil(maxCount * 0.3) : 0;
+  const effectiveMax = maxCount - baseline;
+
   // Show only every N days on x-axis for readability
   const showEveryNDays = days > 14 ? 7 : days > 7 ? 3 : 1;
 
@@ -66,7 +71,9 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
         {/* Chart */}
         <div className="flex items-end justify-between gap-1 h-48">
           {dateRange.map((day, index) => {
-            const heightPercentage = (day.count / maxCount) * 100;
+            // Calculate height with baseline subtraction for better visual contrast
+            const adjustedCount = Math.max(day.count - baseline, 0);
+            const heightPercentage = effectiveMax > 0 ? (adjustedCount / effectiveMax) * 100 : 0;
             return (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
                 <motion.div
