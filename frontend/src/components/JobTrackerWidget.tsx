@@ -108,7 +108,7 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/applications');
+      const response = await apiClient.get('/api/applications?limit=500');
       const frontendJobs = backendListToFrontend(response.data);
       setJobs(frontendJobs);
     } catch (error: any) {

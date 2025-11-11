@@ -36,7 +36,7 @@ export default function Dashboard() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/applications');
+      const response = await apiClient.get('/api/applications?limit=500');
       const mappedJobs = response.data.map(backendToFrontend);
       setJobs(mappedJobs);
     } catch (error) {

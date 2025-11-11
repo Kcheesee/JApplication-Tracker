@@ -1,13 +1,22 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Job } from '../types/job';
 import { format, subDays, startOfDay } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 interface ApplicationTimelineProps {
   jobs: Job[];
   days?: number;
 }
 
-export function ApplicationTimeline({ jobs, days = 30 }: ApplicationTimelineProps) {
+export function ApplicationTimeline({ jobs, days: initialDays = 30 }: ApplicationTimelineProps) {
+  const [days, setDays] = useState(initialDays);
   // Get applications by day for the last N days
   const today = startOfDay(new Date());
   const dateRange = Array.from({ length: days }, (_, i) => {
@@ -35,7 +44,23 @@ export function ApplicationTimeline({ jobs, days = 30 }: ApplicationTimelineProp
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Application Activity ({days} days)</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">Application Activity</h3>
+        <Select value={days.toString()} onValueChange={(value) => setDays(Number(value))}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select timeframe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="14">Last 14 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="60">Last 60 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="180">Last 6 months</SelectItem>
+            <SelectItem value="365">Last year</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-2">
         {/* Chart */}
