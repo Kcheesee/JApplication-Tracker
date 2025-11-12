@@ -101,6 +101,7 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
                   initial={{ height: 0 }}
                   animate={{ height: `${heightPercentage}%` }}
                   transition={{ duration: 0.5, delay: index * 0.02 }}
+                  style={{ minHeight: day.count > 0 ? '8px' : '0' }}
                   className="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors relative group"
                 >
                   {day.count > 0 && (
