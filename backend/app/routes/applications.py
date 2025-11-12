@@ -459,7 +459,7 @@ async def research_company(
         researcher = get_company_researcher(provider=provider, api_key=api_key)
         result = await researcher.research_company(
             company_name=application.company,
-            company_website=application.company_website
+            company_website=application.job_link  # Use job_link as company website
         )
 
         if not result.get("success"):
