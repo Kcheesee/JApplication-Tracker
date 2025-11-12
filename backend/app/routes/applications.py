@@ -1,14 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel, HttpUrl
 from ..database import get_db
 from ..models.user import User
 from ..models.application import Application
 from ..models.status_history import StatusHistory
 from ..schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse, BulkDeleteRequest
 from ..auth.security import get_current_user
+from ..services.job_parser import get_job_parser
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
+
+
+class ParseURLRequest(BaseModel):
+    url: HttpUrl
 
 
 @router.get("", response_model=List[ApplicationResponse])
@@ -321,3 +327,38 @@ def get_application_stats(
             reverse=True
         )
     }
+
+
+@router.post("/parse-url")
+async def parse_job_url(
+    request: ParseURLRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Parse a job posting URL and extract structured data using AI.
+
+    Works with LinkedIn, Indeed, Greenhouse, Lever, company career pages, etc.
+    Uses Claude AI to intelligently extract job details from any job posting.
+    """
+    try:
+        parser = get_job_parser()
+        result = await parser.parse_job_url(str(request.url))
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get("error", "Failed to parse job URL")
+            )
+
+        return result
+
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to fetch URL: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error parsing job URL: {str(e)}"
+        )
