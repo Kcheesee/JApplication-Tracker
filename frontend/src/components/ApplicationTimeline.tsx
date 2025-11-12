@@ -38,11 +38,25 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
   });
 
   const maxCount = Math.max(...dateRange.map(d => d.count), 1);
+  const countsWithData = dateRange.filter(d => d.count > 0).map(d => d.count);
+  const minCount = countsWithData.length > 0 ? Math.min(...countsWithData) : 0;
 
-  // Use a baseline that's 50% of max to create better visual contrast
-  // This prevents the "all bars same height" problem when variance is low
-  const baseline = maxCount > 5 ? Math.ceil(maxCount * 0.3) : 0;
-  const effectiveMax = maxCount - baseline;
+  // Calculate variance to determine if we need baseline adjustment
+  const variance = maxCount - minCount;
+
+  // Use a baseline that creates better visual contrast
+  // If variance is low (all bars similar height), use a more aggressive baseline
+  let baseline = 0;
+  if (maxCount > 1 && variance < 5) {
+    // Low variance: subtract most of the minimum to create contrast
+    // For example: 15,16,17,18,19 → subtract 14 → 1,2,3,4,5 (much better contrast!)
+    baseline = Math.floor(minCount * 0.9);
+  } else if (maxCount > 5 && variance >= 5) {
+    // Normal variance: use 30% baseline
+    baseline = Math.ceil(maxCount * 0.3);
+  }
+
+  const effectiveMax = Math.max(maxCount - baseline, 1); // Prevent division by zero
 
   // Show only every N days on x-axis for readability
   const showEveryNDays = days > 14 ? 7 : days > 7 ? 3 : 1;
