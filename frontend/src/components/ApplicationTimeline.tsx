@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Job } from '../types/job';
 import { format, subDays, startOfDay } from 'date-fns';
 import {
@@ -9,6 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface ApplicationTimelineProps {
   jobs: Job[];
@@ -39,8 +47,11 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
 
   const maxCount = Math.max(...dateRange.map(d => d.count), 1);
 
-  // Show only every N days on x-axis for readability
-  const showEveryNDays = days > 14 ? 7 : days > 7 ? 3 : 1;
+  // Prepare data for Recharts
+  const chartData = dateRange.map(d => ({
+    date: d.dateStr,
+    applications: d.count
+  }));
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -63,46 +74,37 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
       </div>
 
       <div className="space-y-2">
-        {/* Chart */}
-        <div className="flex items-end justify-between gap-1 h-48">
-          {dateRange.map((day, index) => {
-            // Simple: height = (count / maxCount) * 100%
-            // Day with most apps = 100% height, others scale down proportionally
-            const heightPercentage = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-
-            return (
-              <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${heightPercentage}%` }}
-                  transition={{ duration: 0.5, delay: index * 0.02 }}
-                  className="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors relative group"
-                  style={{ minHeight: day.count > 0 ? '4px' : '0' }}
-                >
-                  {day.count > 0 && (
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                      {day.count} app{day.count !== 1 ? 's' : ''}
-                    </div>
-                  )}
-                </motion.div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* X-axis labels */}
-        <div className="flex items-center justify-between gap-1 pt-2 border-t">
-          {dateRange.map((day, index) => (
-            <div key={index} className="flex-1 text-center">
-              {index % showEveryNDays === 0 ? (
-                <span className="text-xs text-gray-500 transform -rotate-45 inline-block origin-top-right">
-                  {day.dateStr}
-                </span>
-              ) : (
-                <span className="text-xs text-transparent">.</span>
-              )}
-            </div>
-          ))}
+        {/* Line Chart */}
+        <div className="h-48 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                interval={days > 30 ? Math.floor(days / 10) : days > 14 ? 3 : 1}
+              />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1f2937',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px'
+                }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="applications"
+                stroke="#6366f1"
+                strokeWidth={2}
+                dot={{ fill: '#6366f1', r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Summary */}
