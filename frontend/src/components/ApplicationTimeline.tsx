@@ -58,6 +58,17 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
 
   const effectiveMax = Math.max(maxCount - baseline, 1); // Prevent division by zero
 
+  // Debug logging
+  console.log('Timeline Debug:', {
+    maxCount,
+    minCount,
+    variance,
+    baseline,
+    effectiveMax,
+    totalApplications: dateRange.reduce((sum, d) => sum + d.count, 0),
+    daysWithData: countsWithData.length
+  });
+
   // Show only every N days on x-axis for readability
   const showEveryNDays = days > 14 ? 7 : days > 7 ? 3 : 1;
 
@@ -93,6 +104,16 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
             // But still maintain relative differences between bars
             if (day.count > 0 && heightPercentage < 2) {
               heightPercentage = 2;
+            }
+
+            // Debug first few bars
+            if (index < 3 || day.count > 0) {
+              console.log(`Day ${index} (${day.dateStr}):`, {
+                count: day.count,
+                adjustedCount,
+                heightPercentage,
+                minHeight: day.count > 0 ? '8px' : '0'
+              });
             }
 
             return (
