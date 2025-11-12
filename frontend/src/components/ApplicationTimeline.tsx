@@ -67,7 +67,11 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
         <div className="flex items-end justify-between gap-1 h-48">
           {dateRange.map((day, index) => {
             // Calculate height as simple percentage of max
-            const heightPercentage = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+            // Ensure minimum 5% for visibility if there's data
+            let heightPercentage = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+            if (day.count > 0 && heightPercentage < 5) {
+              heightPercentage = 5;
+            }
 
             return (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
@@ -75,7 +79,6 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
                   initial={{ height: 0 }}
                   animate={{ height: `${heightPercentage}%` }}
                   transition={{ duration: 0.5, delay: index * 0.02 }}
-                  style={{ minHeight: day.count > 0 ? '8px' : '0' }}
                   className="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors relative group"
                 >
                   {day.count > 0 && (
