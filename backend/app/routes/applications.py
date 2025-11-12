@@ -476,7 +476,14 @@ async def research_company(
             detail=f"Failed to fetch company information: {str(e)}"
         )
     except Exception as e:
+        error_msg = str(e)
+        # Check if it's an authentication error
+        if "401" in error_msg or "authentication_error" in error_msg or "invalid x-api-key" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid or expired API key for {provider}. Please update your API key in settings."
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error researching company: {str(e)}"
+            detail=f"Error researching company: {error_msg}"
         )
