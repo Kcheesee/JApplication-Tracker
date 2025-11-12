@@ -1,18 +1,17 @@
 """
-Job Posting URL Parser using Claude AI
+Job Posting URL Parser using Multi-Provider AI
 
 Extracts structured job data from any job posting URL using LLM-powered parsing.
+Supports Claude, GPT-4, Gemini, and OpenRouter.
 Works with LinkedIn, Indeed, Greenhouse, Lever, company career pages, etc.
 """
 
 import httpx
-import anthropic
 from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
-import os
 import logging
-import json
 from datetime import datetime
+from .llm_service import LLMService
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +19,16 @@ logger = logging.getLogger(__name__)
 class JobParserService:
     """Service for parsing job posting URLs and extracting structured data."""
 
-    def __init__(self):
-        self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not self.anthropic_api_key:
-            raise ValueError("ANTHROPIC_API_KEY not found in environment")
+    def __init__(self, provider: str = "anthropic", api_key: Optional[str] = None):
+        """
+        Initialize job parser with specified LLM provider.
 
-        self.client = anthropic.Anthropic(api_key=self.anthropic_api_key)
+        Args:
+            provider: LLM provider (anthropic, openai, google, openrouter)
+            api_key: API key for the provider (uses user settings if not provided)
+        """
+        self.llm_service = LLMService(provider=provider, api_key=api_key) if api_key else None
+        self.provider = provider
 
     async def parse_job_url(self, url: str) -> Dict[str, Any]:
         """
@@ -44,8 +47,8 @@ class JobParserService:
             # Step 2: Clean and extract text from HTML
             text_content = self._extract_text(html_content)
 
-            # Step 3: Use Claude to extract structured data
-            job_data = await self._claude_extract(text_content, url)
+            # Step 3: Use LLM to extract structured data
+            job_data = await self._llm_extract(text_content, url)
 
             return {
                 "success": True,
@@ -90,8 +93,11 @@ class JobParserService:
         # Limit to reasonable size (Claude's context window)
         return text[:15000]  # ~3750 tokens
 
-    async def _claude_extract(self, text: str, url: str) -> Dict[str, Any]:
-        """Use Claude to extract structured job data from text."""
+    async def _llm_extract(self, text: str, url: str) -> Dict[str, Any]:
+        """Use configured LLM to extract structured job data from text."""
+
+        if not self.llm_service:
+            raise ValueError("LLM service not initialized - API key required")
 
         prompt = f"""You are a job posting parser. Extract structured information from the following job posting text.
 
@@ -127,49 +133,42 @@ Important:
 - Return ONLY the JSON object, no other text"""
 
         try:
-            message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
-                temperature=0.2,  # Low temperature for consistent extraction
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }]
-            )
+            # Use the provider's parse_job_posting method
+            job_data = self.llm_service.parse_job_posting(text, url)
 
-            # Extract JSON from response
-            response_text = message.content[0].text.strip()
-
-            # Remove markdown code blocks if present
-            if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-
-            # Parse JSON
-            job_data = json.loads(response_text.strip())
+            if not job_data:
+                raise ValueError("LLM returned empty response")
 
             # Add source URL
             job_data["source_url"] = url
 
             return job_data
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Claude response as JSON: {e}")
-            logger.error(f"Response was: {response_text}")
-            raise ValueError("Could not parse job posting data")
-
         except Exception as e:
-            logger.error(f"Claude extraction failed: {e}")
+            logger.error(f"LLM extraction failed ({self.provider}): {e}")
             raise
 
 
-# Singleton instance
-_parser_service = None
+# Singleton instances per provider
+_parser_services = {}
 
-def get_job_parser() -> JobParserService:
-    """Get or create the job parser service instance."""
-    global _parser_service
-    if _parser_service is None:
-        _parser_service = JobParserService()
-    return _parser_service
+def get_job_parser(provider: str = "anthropic", api_key: Optional[str] = None) -> JobParserService:
+    """
+    Get or create a job parser service instance for the specified provider.
+
+    Args:
+        provider: LLM provider (anthropic, openai, google, openrouter)
+        api_key: API key for the provider
+
+    Returns:
+        JobParserService instance
+    """
+    if not api_key:
+        raise ValueError(f"API key required for {provider}")
+
+    cache_key = f"{provider}:{api_key[:8]}"  # Cache by provider and partial key
+
+    if cache_key not in _parser_services:
+        _parser_services[cache_key] = JobParserService(provider=provider, api_key=api_key)
+
+    return _parser_services[cache_key]

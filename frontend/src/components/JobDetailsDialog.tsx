@@ -10,9 +10,11 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { CalendarIntegration } from './CalendarIntegration';
 import { StatusTimeline } from './StatusTimeline';
-import { ExternalLink, Mail, Calendar, MapPin, DollarSign, Briefcase, FileText } from 'lucide-react';
+import { ExternalLink, Mail, Calendar, MapPin, DollarSign, Briefcase, FileText, Search, Building, TrendingUp, Users, Code, Lightbulb, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import apiClient from '../api/client';
+import toast from 'react-hot-toast';
 
 interface JobDetailsDialogProps {
   open: boolean;
@@ -31,6 +33,27 @@ const statusColors: Record<string, string> = {
   'Ghosted': 'bg-gray-100 text-gray-800',
 };
 
+interface CompanyResearch {
+  overview: string;
+  recent_news: string[];
+  culture: {
+    work_environment: string;
+    values: string;
+    benefits: string[];
+  };
+  tech_stack: string[];
+  interview_tips: {
+    talking_points: string[];
+    questions_to_ask: string[];
+  };
+  quick_facts: {
+    employee_count: string;
+    glassdoor_rating: string;
+    funding: string;
+    notable_clients: string[];
+  };
+}
+
 export function JobDetailsDialog({
   open,
   onOpenChange,
@@ -44,6 +67,10 @@ export function JobDetailsDialog({
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Company research state
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [companyResearch, setCompanyResearch] = useState<CompanyResearch | null>(null);
 
   if (!job) return null;
 
@@ -80,6 +107,25 @@ export function JobDetailsDialog({
   const startEditingNotes = () => {
     setNotesValue(job.notes || '');
     setEditingNotes(true);
+  };
+
+  const handleResearchCompany = async () => {
+    setResearchLoading(true);
+    try {
+      const response = await apiClient.post(`/api/applications/${job.id}/research-company`);
+
+      if (response.data.success) {
+        setCompanyResearch(response.data.research);
+        toast.success('Company research completed!');
+      } else {
+        toast.error(response.data.error || 'Failed to research company');
+      }
+    } catch (error: any) {
+      console.error('Error researching company:', error);
+      toast.error(error.response?.data?.detail || 'Failed to research company');
+    } finally {
+      setResearchLoading(false);
+    }
   };
 
   return (
@@ -361,12 +407,201 @@ export function JobDetailsDialog({
               </div>
             </div>
 
-            {/* Company Research */}
+            {/* Company Research - AI-Powered */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Company Research</h4>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                {job.company_research || 'No company research added yet. Add notes about the company, culture, products, recent news, etc.'}
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Building className="h-4 w-4" />
+                  Company Research
+                </h4>
+                <Button
+                  size="sm"
+                  onClick={handleResearchCompany}
+                  disabled={researchLoading}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                >
+                  {researchLoading ? (
+                    <>
+                      <Search className="h-4 w-4 mr-2 animate-spin" />
+                      Researching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      Research Company
+                    </>
+                  )}
+                </Button>
               </div>
+
+              {!companyResearch ? (
+                <div className="text-sm text-gray-600 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg text-center">
+                  <Building className="h-12 w-12 text-purple-400 mx-auto mb-3" />
+                  <p className="font-medium mb-1">Get AI-Powered Company Insights</p>
+                  <p className="text-xs mb-3">
+                    Click "Research Company" to get comprehensive interview prep including company overview, culture, recent news, and interview tips.
+                  </p>
+                  <p className="text-xs text-purple-600">
+                    ⚡ Powered by your preferred LLM
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Company Overview */}
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Building className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <h5 className="font-semibold text-blue-900">Overview</h5>
+                    </div>
+                    <p className="text-sm text-blue-800 leading-relaxed">{companyResearch.overview}</p>
+                  </div>
+
+                  {/* Recent News */}
+                  {companyResearch.recent_news && companyResearch.recent_news.length > 0 && (
+                    <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
+                        <h5 className="font-semibold text-green-900">Recent News & Developments</h5>
+                      </div>
+                      <ul className="space-y-1">
+                        {companyResearch.recent_news.map((news, idx) => (
+                          <li key={idx} className="text-sm text-green-800 flex items-start gap-2">
+                            <span className="text-green-600 mt-1">•</span>
+                            <span>{news}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Culture & Values */}
+                  {companyResearch.culture && (
+                    <div className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Users className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <h5 className="font-semibold text-amber-900">Culture & Values</h5>
+                      </div>
+                      <div className="space-y-2 text-sm text-amber-800">
+                        {companyResearch.culture.work_environment && (
+                          <p><span className="font-medium">Environment:</span> {companyResearch.culture.work_environment}</p>
+                        )}
+                        {companyResearch.culture.values && (
+                          <p><span className="font-medium">Values:</span> {companyResearch.culture.values}</p>
+                        )}
+                        {companyResearch.culture.benefits && companyResearch.culture.benefits.length > 0 && (
+                          <div>
+                            <p className="font-medium mb-1">Benefits:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {companyResearch.culture.benefits.map((benefit, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800">
+                                  {benefit}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tech Stack */}
+                  {companyResearch.tech_stack && companyResearch.tech_stack.length > 0 && (
+                    <div className="p-4 bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Code className="h-5 w-5 text-slate-600 mt-0.5" />
+                        <h5 className="font-semibold text-slate-900">Tech Stack</h5>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {companyResearch.tech_stack.map((tech, idx) => (
+                          <span key={idx} className="inline-flex items-center px-3 py-1 rounded-md text-sm bg-slate-100 text-slate-800 font-mono">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Interview Tips */}
+                  {companyResearch.interview_tips && (
+                    <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-3">
+                        <Lightbulb className="h-5 w-5 text-purple-600 mt-0.5" />
+                        <h5 className="font-semibold text-purple-900">Interview Preparation Tips</h5>
+                      </div>
+                      <div className="space-y-3">
+                        {companyResearch.interview_tips.talking_points && companyResearch.interview_tips.talking_points.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-purple-800 mb-1">Key Talking Points:</p>
+                            <ul className="space-y-1">
+                              {companyResearch.interview_tips.talking_points.map((point, idx) => (
+                                <li key={idx} className="text-sm text-purple-700 flex items-start gap-2">
+                                  <span className="text-purple-500 mt-1">✓</span>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {companyResearch.interview_tips.questions_to_ask && companyResearch.interview_tips.questions_to_ask.length > 0 && (
+                          <div>
+                            <p className="text-sm font-medium text-purple-800 mb-1">Questions to Ask:</p>
+                            <ul className="space-y-1">
+                              {companyResearch.interview_tips.questions_to_ask.map((question, idx) => (
+                                <li key={idx} className="text-sm text-purple-700 flex items-start gap-2">
+                                  <span className="text-purple-500 mt-1">?</span>
+                                  <span>{question}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Facts */}
+                  {companyResearch.quick_facts && (
+                    <div className="p-4 bg-gradient-to-br from-rose-50 to-red-50 border border-rose-200 rounded-lg">
+                      <div className="flex items-start gap-2 mb-2">
+                        <Star className="h-5 w-5 text-rose-600 mt-0.5" />
+                        <h5 className="font-semibold text-rose-900">Quick Facts</h5>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        {companyResearch.quick_facts.employee_count && (
+                          <div>
+                            <p className="text-rose-600 font-medium">Employees</p>
+                            <p className="text-rose-800">{companyResearch.quick_facts.employee_count}</p>
+                          </div>
+                        )}
+                        {companyResearch.quick_facts.glassdoor_rating && (
+                          <div>
+                            <p className="text-rose-600 font-medium">Glassdoor</p>
+                            <p className="text-rose-800">{companyResearch.quick_facts.glassdoor_rating}</p>
+                          </div>
+                        )}
+                        {companyResearch.quick_facts.funding && (
+                          <div>
+                            <p className="text-rose-600 font-medium">Funding</p>
+                            <p className="text-rose-800">{companyResearch.quick_facts.funding}</p>
+                          </div>
+                        )}
+                        {companyResearch.quick_facts.notable_clients && companyResearch.quick_facts.notable_clients.length > 0 && (
+                          <div className="col-span-2">
+                            <p className="text-rose-600 font-medium mb-1">Notable Clients</p>
+                            <div className="flex flex-wrap gap-1">
+                              {companyResearch.quick_facts.notable_clients.map((client, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-rose-100 text-rose-800">
+                                  {client}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="pt-2">

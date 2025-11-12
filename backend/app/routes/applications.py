@@ -9,6 +9,8 @@ from ..models.status_history import StatusHistory
 from ..schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationResponse, BulkDeleteRequest
 from ..auth.security import get_current_user
 from ..services.job_parser import get_job_parser
+from ..services.company_researcher import get_company_researcher
+from ..models.user_settings import UserSettings
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
 
@@ -332,16 +334,46 @@ def get_application_stats(
 @router.post("/parse-url")
 async def parse_job_url(
     request: ParseURLRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     Parse a job posting URL and extract structured data using AI.
 
     Works with LinkedIn, Indeed, Greenhouse, Lever, company career pages, etc.
-    Uses Claude AI to intelligently extract job details from any job posting.
+    Uses your preferred LLM (Claude, GPT-4, Gemini) to extract job details.
     """
     try:
-        parser = get_job_parser()
+        # Get user's LLM settings
+        settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.id).first()
+
+        if not settings:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User settings not found. Please configure your LLM provider in settings."
+            )
+
+        # Get the appropriate API key based on provider
+        provider = settings.llm_provider or "anthropic"
+        api_key = None
+
+        if provider == "anthropic":
+            api_key = settings.anthropic_api_key
+        elif provider == "openai":
+            api_key = settings.openai_api_key
+        elif provider == "google":
+            api_key = settings.google_api_key
+        elif provider == "openrouter":
+            api_key = settings.openrouter_api_key
+
+        if not api_key:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"No API key configured for {provider}. Please add it in settings."
+            )
+
+        # Parse with user's preferred LLM
+        parser = get_job_parser(provider=provider, api_key=api_key)
         result = await parser.parse_job_url(str(request.url))
 
         if not result.get("success"):
@@ -361,4 +393,89 @@ async def parse_job_url(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error parsing job URL: {str(e)}"
+        )
+
+
+@router.post("/{application_id}/research-company")
+async def research_company(
+    application_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Research a company using AI-powered web scraping and analysis.
+
+    Provides comprehensive interview preparation including:
+    - Company overview and recent news
+    - Culture, values, and tech stack
+    - Interview tips and talking points
+    - Quick facts (employee count, funding, etc.)
+
+    Uses your preferred LLM (Claude, GPT-4, Gemini) for analysis.
+    """
+    try:
+        # Verify application belongs to user
+        application = db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application not found"
+            )
+
+        # Get user's LLM settings
+        settings = db.query(UserSettings).filter(UserSettings.user_id == current_user.id).first()
+
+        if not settings:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User settings not found. Please configure your LLM provider in settings."
+            )
+
+        # Get the appropriate API key based on provider
+        provider = settings.llm_provider or "anthropic"
+        api_key = None
+
+        if provider == "anthropic":
+            api_key = settings.anthropic_api_key
+        elif provider == "openai":
+            api_key = settings.openai_api_key
+        elif provider == "google":
+            api_key = settings.google_api_key
+        elif provider == "openrouter":
+            api_key = settings.openrouter_api_key
+
+        if not api_key:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"No API key configured for {provider}. Please add it in settings."
+            )
+
+        # Research with user's preferred LLM
+        researcher = get_company_researcher(provider=provider, api_key=api_key)
+        result = await researcher.research_company(
+            company_name=application.company,
+            company_website=application.company_website
+        )
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get("error", "Failed to research company")
+            )
+
+        return result
+
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to fetch company information: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error researching company: {str(e)}"
         )
