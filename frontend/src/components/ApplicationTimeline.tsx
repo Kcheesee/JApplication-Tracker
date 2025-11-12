@@ -45,8 +45,6 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
     }
   });
 
-  const maxCount = Math.max(...dateRange.map(d => d.count), 1);
-
   // Prepare data for Recharts
   const chartData = dateRange.map(d => ({
     date: d.dateStr,
