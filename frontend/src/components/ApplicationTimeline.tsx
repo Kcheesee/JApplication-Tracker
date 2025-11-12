@@ -87,7 +87,13 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
           {dateRange.map((day, index) => {
             // Calculate height with baseline subtraction for better visual contrast
             const adjustedCount = Math.max(day.count - baseline, 0);
-            const heightPercentage = effectiveMax > 0 ? (adjustedCount / effectiveMax) * 100 : 0;
+            let heightPercentage = effectiveMax > 0 ? (adjustedCount / effectiveMax) * 100 : 0;
+
+            // Ensure bars with data are visible: minimum 2% height for visibility
+            // But still maintain relative differences between bars
+            if (day.count > 0 && heightPercentage < 2) {
+              heightPercentage = 2;
+            }
 
             return (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
