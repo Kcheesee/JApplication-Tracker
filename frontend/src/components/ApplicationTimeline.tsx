@@ -88,6 +88,7 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
             // Calculate height with baseline subtraction for better visual contrast
             const adjustedCount = Math.max(day.count - baseline, 0);
             const heightPercentage = effectiveMax > 0 ? (adjustedCount / effectiveMax) * 100 : 0;
+
             return (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
                 <motion.div
@@ -95,7 +96,6 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
                   animate={{ height: `${heightPercentage}%` }}
                   transition={{ duration: 0.5, delay: index * 0.02 }}
                   className="w-full bg-indigo-500 rounded-t hover:bg-indigo-600 transition-colors relative group"
-                  style={{ minHeight: day.count > 0 ? '4px' : '0' }}
                 >
                   {day.count > 0 && (
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
