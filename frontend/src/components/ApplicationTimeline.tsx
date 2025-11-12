@@ -38,36 +38,6 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
   });
 
   const maxCount = Math.max(...dateRange.map(d => d.count), 1);
-  const countsWithData = dateRange.filter(d => d.count > 0).map(d => d.count);
-  const minCount = countsWithData.length > 0 ? Math.min(...countsWithData) : 0;
-
-  // Calculate variance to determine if we need baseline adjustment
-  const variance = maxCount - minCount;
-
-  // Use a baseline that creates better visual contrast
-  // If variance is low (all bars similar height), use a more aggressive baseline
-  let baseline = 0;
-  if (maxCount > 1 && variance < 5) {
-    // Low variance: subtract most of the minimum to create contrast
-    // For example: 15,16,17,18,19 → subtract 14 → 1,2,3,4,5 (much better contrast!)
-    baseline = Math.floor(minCount * 0.9);
-  } else if (maxCount > 5 && variance >= 5) {
-    // Normal variance: use 30% baseline
-    baseline = Math.ceil(maxCount * 0.3);
-  }
-
-  const effectiveMax = Math.max(maxCount - baseline, 1); // Prevent division by zero
-
-  // Debug logging
-  console.log('Timeline Debug:', {
-    maxCount,
-    minCount,
-    variance,
-    baseline,
-    effectiveMax,
-    totalApplications: dateRange.reduce((sum, d) => sum + d.count, 0),
-    daysWithData: countsWithData.length
-  });
 
   // Show only every N days on x-axis for readability
   const showEveryNDays = days > 14 ? 7 : days > 7 ? 3 : 1;
@@ -96,25 +66,8 @@ export function ApplicationTimeline({ jobs, days: initialDays = 30 }: Applicatio
         {/* Chart */}
         <div className="flex items-end justify-between gap-1 h-48">
           {dateRange.map((day, index) => {
-            // Calculate height with baseline subtraction for better visual contrast
-            const adjustedCount = Math.max(day.count - baseline, 0);
-            let heightPercentage = effectiveMax > 0 ? (adjustedCount / effectiveMax) * 100 : 0;
-
-            // Ensure bars with data are visible: minimum 2% height for visibility
-            // But still maintain relative differences between bars
-            if (day.count > 0 && heightPercentage < 2) {
-              heightPercentage = 2;
-            }
-
-            // Debug first few bars
-            if (index < 3 || day.count > 0) {
-              console.log(`Day ${index} (${day.dateStr}):`, {
-                count: day.count,
-                adjustedCount,
-                heightPercentage,
-                minHeight: day.count > 0 ? '8px' : '0'
-              });
-            }
+            // Calculate height as simple percentage of max
+            const heightPercentage = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
 
             return (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
