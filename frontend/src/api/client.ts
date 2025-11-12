@@ -24,7 +24,13 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only handle 401s from OUR backend, not from third-party APIs
+    // Check if the error is from our API by looking at the request URL
+    const isOurApi = error.config?.baseURL === API_URL ||
+                     error.config?.url?.startsWith(API_URL) ||
+                     error.config?.url?.startsWith('/api');
+
+    if (error.response?.status === 401 && isOurApi) {
       // Clear any stored tokens
       localStorage.removeItem('token')
       localStorage.removeItem('user')
