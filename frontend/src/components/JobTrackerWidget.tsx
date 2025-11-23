@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, RefreshCw, Mail, FileSpreadsheet, Inbox } from 'lucide-react';
+import { Search, Plus, RefreshCw, Mail, FileSpreadsheet, Inbox, Grid, List } from 'lucide-react';
 import { Job, JobStatus } from '../types/job';
 import { QuickStartCard } from './QuickStartCard';
 import { JobTable, SortField, SortDirection } from './JobTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { AddJobDialog } from './AddJobDialog';
 import { JobDetailsDialog } from './JobDetailsDialog';
+import { CompanyGroup } from './CompanyGroup';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -17,15 +18,17 @@ import {
   SelectValue,
 } from './ui/select';
 import { filterJobsUtil } from '../lib/filterJobs';
+import { groupJobsByCompany } from '../lib/grouping';
 import apiClient from '../api/client';
 import { backendListToFrontend, frontendToBackend } from '../lib/dataMapper';
 import toast from 'react-hot-toast';
 
 interface JobTrackerWidgetProps {
   compact?: boolean;
+  groupByCompany?: boolean;
 }
 
-export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
+export function JobTrackerWidget({ compact = false, groupByCompany = false }: JobTrackerWidgetProps) {
   // State
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
@@ -33,6 +36,7 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
   const [statusFilter, setStatusFilter] = useState<JobStatus | "All">("All");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [localGroupByCompany, setLocalGroupByCompany] = useState(groupByCompany);
 
   // Dialog states
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -56,6 +60,11 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
     loadJobs();
     checkConnections();
   }, []);
+
+  // Sync local group state with prop changes
+  useEffect(() => {
+    setLocalGroupByCompany(groupByCompany);
+  }, [groupByCompany]);
 
   // Apply filters and sorting whenever jobs, search, filter, or sort changes
   useEffect(() => {
@@ -458,6 +467,26 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
             </SelectContent>
           </Select>
 
+          {/* View Toggle */}
+          <Button
+            onClick={() => setLocalGroupByCompany(!localGroupByCompany)}
+            variant="outline"
+            className="w-full sm:w-auto"
+            title={localGroupByCompany ? "Switch to list view" : "Group by company"}
+          >
+            {localGroupByCompany ? (
+              <>
+                <List className="h-4 w-4 mr-2" />
+                List
+              </>
+            ) : (
+              <>
+                <Grid className="h-4 w-4 mr-2" />
+                Group
+              </>
+            )}
+          </Button>
+
           <Button onClick={handleAddNew} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add
@@ -491,26 +520,41 @@ export function JobTrackerWidget({ compact = false }: JobTrackerWidgetProps) {
           </div>
         )}
 
-        {/* Jobs Table */}
+        {/* Jobs Display - Grouped or Flat */}
         {!loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            <JobTable
-              jobs={filteredJobs}
-              onJobClick={handleJobClick}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDeleteJob}
-              onMarkInterviewing={handleMarkInterviewing}
-              selectedJobs={selectedJobs}
-              onToggleSelect={handleToggleSelect}
-              onToggleSelectAll={handleToggleSelectAll}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-            />
+            {localGroupByCompany ? (
+              /* Grouped View */
+              <div className="space-y-3">
+                {groupJobsByCompany(filteredJobs).map(group => (
+                  <CompanyGroup
+                    key={group.company}
+                    group={group}
+                    onJobClick={handleJobClick}
+                    isDefaultExpanded={filteredJobs.length <= 10}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Flat/List View */
+              <JobTable
+                jobs={filteredJobs}
+                onJobClick={handleJobClick}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDeleteJob}
+                onMarkInterviewing={handleMarkInterviewing}
+                selectedJobs={selectedJobs}
+                onToggleSelect={handleToggleSelect}
+                onToggleSelectAll={handleToggleSelectAll}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+            )}
           </motion.div>
         )}
 

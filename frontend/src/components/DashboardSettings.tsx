@@ -13,6 +13,7 @@ export interface DashboardPreferences {
   showStatusBreakdown: boolean;
   showRecentActivity: boolean;
   showTimeline: boolean;
+  groupByCompany: boolean;
 }
 
 export const DEFAULT_PREFERENCES: DashboardPreferences = {
@@ -25,6 +26,7 @@ export const DEFAULT_PREFERENCES: DashboardPreferences = {
   showStatusBreakdown: true,
   showRecentActivity: true,
   showTimeline: true,
+  groupByCompany: false,
 };
 
 interface DashboardSettingsProps {
@@ -59,6 +61,7 @@ export function DashboardSettings({ preferences, onSave }: DashboardSettingsProp
     { key: 'showStatusBreakdown' as const, label: 'Status Breakdown Chart', description: 'Visual breakdown by status' },
     { key: 'showRecentActivity' as const, label: 'Recent Activity Feed', description: 'Latest updates on your applications' },
     { key: 'showTimeline' as const, label: 'Application Timeline', description: '30-day activity chart' },
+    { key: 'groupByCompany' as const, label: 'Group by Company', description: 'Group multiple applications to the same company together' },
   ];
 
   return (
