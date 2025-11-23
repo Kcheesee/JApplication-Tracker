@@ -162,11 +162,23 @@ export function JobDetailsDialog({
 
     setSavingResearch(true);
     try {
-      await apiClient.post(`/api/applications/${job.id}/save-research`, pendingResearch);
+      const response = await apiClient.post(`/api/applications/${job.id}/save-research`, pendingResearch);
       setCompanyResearch(pendingResearch);
       setPendingResearch(null);
       setShowConfirmDialog(false);
-      toast.success('Company research saved!');
+
+      // Show how many applications were updated
+      const count = response.data.applications_updated || 1;
+      const companyName = response.data.company_name || job.company;
+
+      if (count > 1) {
+        toast.success(
+          `Research saved to ${count} applications for ${companyName}!`,
+          { duration: 4000 }
+        );
+      } else {
+        toast.success('Company research saved!');
+      }
     } catch (error: any) {
       console.error('Error saving research:', error);
       toast.error(error.response?.data?.detail || 'Failed to save research');

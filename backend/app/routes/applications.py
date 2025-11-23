@@ -481,7 +481,8 @@ async def save_company_research(
     db: Session = Depends(get_db)
 ):
     """
-    Save company research data to the application.
+    Save company research data to the application and all other applications
+    from the same company to avoid redundant API calls.
 
     This endpoint is called after the user reviews and confirms the research data.
     """
@@ -498,14 +499,31 @@ async def save_company_research(
                 detail="Application not found"
             )
 
-        # Save research data as JSON string
-        application.company_research = json.dumps(research_data)
+        # Get company name for matching
+        company_name = application.company
+
+        # Find all applications from the same company for this user
+        # Use case-insensitive matching to catch variations
+        similar_applications = db.query(Application).filter(
+            Application.user_id == current_user.id,
+            Application.company.ilike(company_name)
+        ).all()
+
+        # Save research data to all matching applications
+        research_json = json.dumps(research_data)
+        updated_count = 0
+
+        for app in similar_applications:
+            app.company_research = research_json
+            updated_count += 1
+
         db.commit()
-        db.refresh(application)
 
         return {
             "success": True,
-            "message": "Company research saved successfully"
+            "message": "Company research saved successfully",
+            "applications_updated": updated_count,
+            "company_name": company_name
         }
 
     except Exception as e:
