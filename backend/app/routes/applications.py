@@ -477,11 +477,11 @@ async def research_company(
         )
     except Exception as e:
         error_msg = str(e)
-        # Check if it's an authentication error
+        # Check if it's an LLM API key error (use 400 not 401 to avoid logout)
         if "401" in error_msg or "authentication_error" in error_msg or "invalid x-api-key" in error_msg:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid or expired API key for {provider}. Please update your API key in settings."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid or expired {provider} API key. Please update your API key in Settings."
             )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
