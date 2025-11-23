@@ -6,6 +6,7 @@ from ..database import get_db
 from ..models.user import User
 from ..models.application import Application
 from ..models.user_settings import UserSettings
+from ..models.status_history import StatusHistory
 from ..auth.security import get_current_user
 from ..services.gmail_service import GmailService
 from ..services.llm_service import LLMService
@@ -134,7 +135,20 @@ def sync_gmail(
 
             if existing:
                 # Update existing application
-                existing.status = job_data.get('status', existing.status)
+                old_status = existing.status
+                new_status = job_data.get('status', existing.status)
+
+                # Only create history entry if status actually changed
+                if new_status != old_status:
+                    existing.status = new_status
+                    status_change = StatusHistory(
+                        application_id=existing.id,
+                        old_status=old_status,
+                        new_status=new_status,
+                        notes=f"Status updated via Gmail sync"
+                    )
+                    db.add(status_change)
+
                 if job_data.get('notes'):
                     existing.notes = f"{existing.notes}\n\n{job_data['notes']}" if existing.notes else job_data['notes']
                 updated_count += 1
@@ -167,6 +181,17 @@ def sync_gmail(
                     job_link=email['urls'][0] if email['urls'] else None
                 )
                 db.add(new_application)
+                db.flush()  # Get the ID for the new application
+
+                # Create initial status history entry
+                initial_status = job_data.get('status', 'Applied')
+                initial_history = StatusHistory(
+                    application_id=new_application.id,
+                    old_status=None,
+                    new_status=initial_status,
+                    notes=f"Application created via Gmail sync"
+                )
+                db.add(initial_history)
                 new_count += 1
 
             # Batch commit every N applications to save progress
