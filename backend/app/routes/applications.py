@@ -12,6 +12,7 @@ from ..auth.security import get_current_user
 from ..services.job_parser import get_job_parser
 from ..services.company_researcher import get_company_researcher
 from ..models.user_settings import UserSettings
+from ..utils.api_key_helper import get_llm_api_key
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
 
@@ -354,23 +355,14 @@ async def parse_job_url(
                 detail="User settings not found. Please configure your LLM provider in settings."
             )
 
-        # Get the appropriate API key based on provider
+        # Get the appropriate API key based on provider (with fallback to environment variable)
         provider = settings.llm_provider or "anthropic"
-        api_key = None
-
-        if provider == "anthropic":
-            api_key = settings.anthropic_api_key
-        elif provider == "openai":
-            api_key = settings.openai_api_key
-        elif provider == "google":
-            api_key = settings.google_api_key
-        elif provider == "openrouter":
-            api_key = settings.openrouter_api_key
+        api_key = get_llm_api_key(settings, provider)
 
         if not api_key:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No API key configured for {provider}. Please add it in settings."
+                detail=f"No API key configured for {provider}. Please add it in Settings or set the environment variable."
             )
 
         # Parse with user's preferred LLM
@@ -436,23 +428,14 @@ async def research_company(
                 detail="User settings not found. Please configure your LLM provider in settings."
             )
 
-        # Get the appropriate API key based on provider
+        # Get the appropriate API key based on provider (with fallback to environment variable)
         provider = settings.llm_provider or "anthropic"
-        api_key = None
-
-        if provider == "anthropic":
-            api_key = settings.anthropic_api_key
-        elif provider == "openai":
-            api_key = settings.openai_api_key
-        elif provider == "google":
-            api_key = settings.google_api_key
-        elif provider == "openrouter":
-            api_key = settings.openrouter_api_key
+        api_key = get_llm_api_key(settings, provider)
 
         if not api_key:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No API key configured for {provider}. Please add it in settings."
+                detail=f"No API key configured for {provider}. Please add it in Settings or set the environment variable."
             )
 
         # Research with user's preferred LLM
