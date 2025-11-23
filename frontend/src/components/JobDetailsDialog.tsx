@@ -10,11 +10,21 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { CalendarIntegration } from './CalendarIntegration';
 import { StatusTimeline } from './StatusTimeline';
-import { ExternalLink, Mail, Calendar, MapPin, DollarSign, Briefcase, FileText, Search, Building, TrendingUp, Users, Code, Lightbulb, Star } from 'lucide-react';
+import { ExternalLink, Mail, Calendar, MapPin, DollarSign, Briefcase, FileText, Search, Building, TrendingUp, Users, Code, Lightbulb, Star, Save, X, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import toast from 'react-hot-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface JobDetailsDialogProps {
   open: boolean;
@@ -71,6 +81,24 @@ export function JobDetailsDialog({
   // Company research state
   const [researchLoading, setResearchLoading] = useState(false);
   const [companyResearch, setCompanyResearch] = useState<CompanyResearch | null>(null);
+  const [pendingResearch, setPendingResearch] = useState<CompanyResearch | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [savingResearch, setSavingResearch] = useState(false);
+
+  // Load saved research when job changes
+  useEffect(() => {
+    if (job?.company_research) {
+      try {
+        const savedResearch = JSON.parse(job.company_research);
+        setCompanyResearch(savedResearch);
+      } catch (e) {
+        console.error('Failed to parse saved research:', e);
+      }
+    } else {
+      setCompanyResearch(null);
+    }
+    setPendingResearch(null);
+  }, [job?.id, job?.company_research]);
 
   if (!job) return null;
 
@@ -115,8 +143,9 @@ export function JobDetailsDialog({
       const response = await apiClient.post(`/api/applications/${job.id}/research-company`);
 
       if (response.data.success) {
-        setCompanyResearch(response.data.research);
-        toast.success('Company research completed!');
+        setPendingResearch(response.data.research);
+        setShowConfirmDialog(true);
+        toast.success('Company research completed! Please review and confirm.');
       } else {
         toast.error(response.data.error || 'Failed to research company');
       }
@@ -126,6 +155,30 @@ export function JobDetailsDialog({
     } finally {
       setResearchLoading(false);
     }
+  };
+
+  const handleSaveResearch = async () => {
+    if (!pendingResearch) return;
+
+    setSavingResearch(true);
+    try {
+      await apiClient.post(`/api/applications/${job.id}/save-research`, pendingResearch);
+      setCompanyResearch(pendingResearch);
+      setPendingResearch(null);
+      setShowConfirmDialog(false);
+      toast.success('Company research saved!');
+    } catch (error: any) {
+      console.error('Error saving research:', error);
+      toast.error(error.response?.data?.detail || 'Failed to save research');
+    } finally {
+      setSavingResearch(false);
+    }
+  };
+
+  const handleDiscardResearch = () => {
+    setPendingResearch(null);
+    setShowConfirmDialog(false);
+    toast('Research discarded');
   };
 
   return (
@@ -685,6 +738,82 @@ export function JobDetailsDialog({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Confirmation Dialog for Company Research */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              Confirm Company Research
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              Please review the research below and confirm it's for <span className="font-semibold text-gray-900">{job.company}</span>.
+              {' '}If this looks like the wrong company, click "Discard" and try adding more specific information (like the company website URL) to your application.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {pendingResearch && (
+            <div className="space-y-3 mt-4 text-left max-h-96 overflow-y-auto">
+              {/* Company Overview Preview */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2 mb-1">
+                  <Building className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <h5 className="font-semibold text-blue-900 text-sm">Overview</h5>
+                </div>
+                <p className="text-xs text-blue-800 leading-relaxed">{pendingResearch.overview}</p>
+              </div>
+
+              {/* Quick Facts Preview */}
+              {pendingResearch.quick_facts && (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <h5 className="font-semibold text-gray-900 text-sm mb-2">Quick Facts</h5>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {pendingResearch.quick_facts.employee_count && (
+                      <div>
+                        <p className="text-gray-600 font-medium">Employees</p>
+                        <p className="text-gray-800">{pendingResearch.quick_facts.employee_count}</p>
+                      </div>
+                    )}
+                    {pendingResearch.quick_facts.funding && (
+                      <div>
+                        <p className="text-gray-600 font-medium">Funding</p>
+                        <p className="text-gray-800">{pendingResearch.quick_facts.funding}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-amber-800">
+                  <strong>Tip:</strong> If this is the wrong company, add the company's website URL to your job application for more accurate results.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDiscardResearch} disabled={savingResearch}>
+              <X className="h-4 w-4 mr-2" />
+              Discard
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveResearch} disabled={savingResearch} className="bg-green-600 hover:bg-green-700">
+              {savingResearch ? (
+                <>
+                  <Search className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Research
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

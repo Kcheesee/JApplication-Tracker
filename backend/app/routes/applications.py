@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, HttpUrl
 import httpx
+import json
 from ..database import get_db
 from ..models.user import User
 from ..models.application import Application
@@ -469,4 +470,46 @@ async def research_company(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error researching company: {error_msg}"
+        )
+
+
+@router.post("/{application_id}/save-research")
+async def save_company_research(
+    application_id: int,
+    research_data: dict = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save company research data to the application.
+
+    This endpoint is called after the user reviews and confirms the research data.
+    """
+    try:
+        # Verify application belongs to user
+        application = db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application not found"
+            )
+
+        # Save research data as JSON string
+        application.company_research = json.dumps(research_data)
+        db.commit()
+        db.refresh(application)
+
+        return {
+            "success": True,
+            "message": "Company research saved successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving company research: {str(e)}"
         )
