@@ -437,28 +437,6 @@ export function JobDetailsDialog({
                 </div>
               )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="timeline" className="space-y-4">
-            <StatusTimeline applicationId={job.id} />
-          </TabsContent>
-
-          <TabsContent value="interview" className="space-y-4">
-            {/* Interview Questions */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Interview Questions</h4>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                {job.interview_questions || 'No interview questions added yet. Add common questions you expect or questions you were asked.'}
-              </div>
-            </div>
-
-            {/* Interview Notes */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Interview Notes</h4>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap p-3 bg-green-50 border border-green-200 rounded-lg">
-                {job.interview_notes || 'No interview notes yet. Add notes from your interviews here.'}
-              </div>
-            </div>
 
             {/* Company Research - AI-Powered */}
             <div>
@@ -655,6 +633,28 @@ export function JobDetailsDialog({
                   )}
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="space-y-4">
+            <StatusTimeline applicationId={job.id} />
+          </TabsContent>
+
+          <TabsContent value="interview" className="space-y-4">
+            {/* Interview Questions */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Interview Questions</h4>
+              <div className="text-sm text-gray-700 whitespace-pre-wrap p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                {job.interview_questions || 'No interview questions added yet. Add common questions you expect or questions you were asked.'}
+              </div>
+            </div>
+
+            {/* Interview Notes */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Interview Notes</h4>
+              <div className="text-sm text-gray-700 whitespace-pre-wrap p-3 bg-green-50 border border-green-200 rounded-lg">
+                {job.interview_notes || 'No interview notes yet. Add notes from your interviews here.'}
+              </div>
             </div>
 
             <div className="pt-2">
