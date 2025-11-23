@@ -40,7 +40,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/jobtracker
       REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production-make-it-at-least-32-characters-long-abc123}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-BcUvDoMppl6cH5dY5HzIDRW_nUo87vZyDDFmjbWXK1w=}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

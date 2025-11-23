@@ -11,14 +11,17 @@ import { ExportMenu } from '../components/ExportMenu';
 import { Job } from '../types/job';
 import apiClient from '../api/client';
 import { backendToFrontend } from '../lib/dataMapper';
-import { TrendingUp, Loader2 } from 'lucide-react';
+import { TrendingUp, Loader2, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from '../components/ui/button';
+import toast from 'react-hot-toast';
 
 const STORAGE_KEY = 'dashboard_preferences';
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [preferences, setPreferences] = useState<DashboardPreferences>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : DEFAULT_PREFERENCES;
@@ -43,6 +46,24 @@ export default function Dashboard() {
       console.error('Error fetching applications:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGmailSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await apiClient.post('/api/sync/gmail');
+      toast.success(
+        `Gmail sync complete! New: ${response.data.new_applications}, Updated: ${response.data.updated_applications}`,
+        { duration: 5000 }
+      );
+      await fetchJobs();
+    } catch (error: any) {
+      console.error('Error syncing Gmail:', error);
+      const errorMessage = error.response?.data?.detail || 'Failed to sync Gmail. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -76,6 +97,15 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={handleGmailSync}
+            disabled={syncing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Gmail'}
+          </Button>
           <ExportMenu jobs={jobs} />
           <DashboardSettings preferences={preferences} onSave={handleSavePreferences} />
         </div>

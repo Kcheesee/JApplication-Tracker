@@ -1,6 +1,6 @@
 {
-  "name": "Job Application Tracker",
-  "short_name": "Job Tracker",
+  "name": "Japplication Tracker",
+  "short_name": "Japplication",
   "description": "Track and organize your job applications with powerful analytics, automation, and AI",
   "start_url": "/",
   "display": "standalone",

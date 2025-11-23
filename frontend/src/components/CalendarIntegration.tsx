@@ -53,7 +53,7 @@ export function CalendarIntegration({ job }: CalendarIntegrationProps) {
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Job Application Tracker//EN',
+      'PRODID:-//Japplication Tracker//EN',
       'BEGIN:VEVENT',
       `DTSTART:${startTime}`,
       `DTEND:${endTime}`,
