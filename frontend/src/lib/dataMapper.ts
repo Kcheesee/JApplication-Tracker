@@ -15,6 +15,9 @@ interface BackendApplication {
   email_id?: string;
   interview_date?: string;
   interview_type?: string;
+  interview_questions?: string;
+  interview_notes?: string;
+  company_research?: string;
   location?: string;
   work_mode?: string;
   salary_min?: number;
@@ -160,6 +163,9 @@ export function backendToFrontend(app: BackendApplication): Job {
     application_source: app.application_source,
     interview_date: app.interview_date,
     interview_type: app.interview_type,
+    interview_questions: app.interview_questions,
+    interview_notes: app.interview_notes,
+    company_research: app.company_research,
     location: app.location,
     work_mode: app.work_mode,
     salary_min: app.salary_min,
