@@ -1,12 +1,15 @@
 """API routes for Job Fit Analyzer."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 import httpx
+import json
 from bs4 import BeautifulSoup
 
 from ..database import get_db
 from ..models.user import User
+from ..models.application import Application
 from ..auth.security import get_current_user
 from ..schemas.analyzer import (
     AnalyzeRequest,
@@ -112,6 +115,135 @@ async def analyze_job_fit(
         )
 
 
+@router.post("/applications/{application_id}/save-analysis")
+async def save_fit_analysis(
+    application_id: int,
+    analysis_data: dict = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save fit analysis results to an application.
+    """
+    try:
+        # Verify application belongs to user
+        application = db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        ).first()
+        
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application not found"
+            )
+        
+        # Save analysis data
+        application.fit_analysis_score = analysis_data.get("match_score")
+        application.fit_analysis_label = analysis_data.get("match_label")
+        application.fit_analysis_should_apply = str(analysis_data.get("should_apply", False))
+        application.fit_analysis_recommendation = analysis_data.get("recommendation")
+        application.fit_analysis_data = json.dumps(analysis_data)
+        application.fit_analysis_date = datetime.utcnow()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Fit analysis saved successfully",
+            "application_id": application_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving fit analysis: {str(e)}"
+        )
+
+
+@router.get("/applications/{application_id}/analysis")
+async def get_fit_analysis(
+    application_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get saved fit analysis for an application.
+    """
+    try:
+        application = db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        ).first()
+        
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application not found"
+            )
+        
+        if not application.fit_analysis_data:
+            return {
+                "has_analysis": False,
+                "message": "No fit analysis available for this application"
+            }
+        
+        analysis_data = json.loads(application.fit_analysis_data)
+        
+        return {
+            "has_analysis": True,
+            "analysis": analysis_data,
+            "analysis_date": application.fit_analysis_date
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving fit analysis: {str(e)}"
+        )
+
+
+@router.post("/applications/{application_id}/save-tailoring")
+async def save_tailoring_plan(
+    application_id: int,
+    tailoring_data: dict = Body(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Save tailoring plan to an application.
+    """
+    try:
+        application = db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        ).first()
+        
+        if not application:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application not found"
+            )
+        
+        application.tailoring_plan = json.dumps(tailoring_data)
+        application.tailoring_plan_date = datetime.utcnow()
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Tailoring plan saved successfully",
+            "application_id": application_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving tailoring plan: {str(e)}"
+        )
+
+
+# Keep existing endpoints
 @router.post("/tailor", response_model=TailorResponse)
 async def generate_tailoring_plan(
     request: TailorRequest,
