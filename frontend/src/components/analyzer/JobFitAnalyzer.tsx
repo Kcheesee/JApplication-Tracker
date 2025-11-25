@@ -369,6 +369,7 @@ export default function JobFitAnalyzer() {
     const [analysis, setAnalysis] = useState<EnhancedAnalysisResult | null>(null);
     const [tailoringPlan, setTailoringPlan] = useState<TailoringPlan | null>(null);
     const [useEnhancedAnalysis] = useState(true);
+    const [isUsingDemoData, setIsUsingDemoData] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Mock resume data - in a real app, we would parse the uploaded file
@@ -426,6 +427,7 @@ export default function JobFitAnalyzer() {
 
             // Enrich API response with demo defaults for any missing fields
             setAnalysis(enrichAnalysisData(response.data));
+            setIsUsingDemoData(false); // Real API data
             setLoading(false);
         } catch (err: any) {
             console.error("Analysis failed:", err);
@@ -434,6 +436,7 @@ export default function JobFitAnalyzer() {
                 // Use centralized demo data
                 setTimeout(() => {
                     setAnalysis(getDemoAnalysisData());
+                    setIsUsingDemoData(true); // Using demo/fallback data
                     setLoading(false);
                 }, 1500);
                 return;
@@ -448,10 +451,26 @@ export default function JobFitAnalyzer() {
 
         setLoading(true);
         try {
+            // Transform analysis to match backend's FitAnalysisInput schema
+            const analysisForTailoring = {
+                match_score: analysis.match_score || analysis.overall_score,
+                match_label: analysis.match_label || analysis.fit_tier,
+                should_apply: analysis.should_apply,
+                recommendation: analysis.recommendation || analysis.executive_summary,
+                matches: analysis.matches || [],
+                strong_matches: analysis.strong_matches || 0,
+                matches_count: analysis.matches_count || 0,
+                partial_matches: analysis.partial_matches || 0,
+                gaps: analysis.gap_count || 0, // Backend expects integer, not array
+                dealbreakers: analysis.dealbreakers || [],
+                top_suggestions: analysis.top_suggestions || [],
+                missing_keywords: analysis.missing_keywords || []
+            };
+
             const response = await apiClient.post('/api/analyzer/tailor', {
                 job_url: jobUrl,
                 resume_data: mockResumeData,
-                analysis: analysis
+                analysis: analysisForTailoring
             });
 
             setTailoringPlan(response.data);
@@ -627,6 +646,22 @@ export default function JobFitAnalyzer() {
             {/* Results Section */}
             {analysis && (
                 <div className="space-y-6">
+                    {/* Demo Mode Banner */}
+                    {isUsingDemoData && (
+                        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
+                            <div className="flex items-start">
+                                <AlertCircle className="h-5 w-5 mt-0.5 mr-3 text-amber-500" />
+                                <div>
+                                    <p className="font-medium text-amber-800">Demo Mode</p>
+                                    <p className="text-sm text-amber-700 mt-1">
+                                        Showing sample data because the backend server isn't running.
+                                        Start the backend to get real analysis of job postings.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Key Verdict Banner */}
                     {analysis.key_verdict && (
                         <div className={`p-4 rounded-lg border-l-4 ${analysis.should_apply ? 'bg-green-50 border-green-400' : 'bg-yellow-50 border-yellow-400'}`}>
