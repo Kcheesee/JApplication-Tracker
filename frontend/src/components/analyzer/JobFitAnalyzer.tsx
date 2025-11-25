@@ -80,22 +80,6 @@ interface EnhancedAnalysisResult {
     missing_keywords: string[];
 }
 
-// Legacy type for backward compatibility
-interface AnalysisResult {
-    match_score: number;
-    match_label: string;
-    should_apply: boolean;
-    recommendation: string;
-    matches: any[];
-    strong_matches: number;
-    matches_count: number;
-    partial_matches: number;
-    gaps: number;
-    dealbreakers: string[];
-    top_suggestions: string[];
-    missing_keywords: string[];
-}
-
 interface TailoringPlan {
     job_title: string;
     company: string;
@@ -136,7 +120,7 @@ export default function JobFitAnalyzer() {
     const [error, setError] = useState<string | null>(null);
     const [analysis, setAnalysis] = useState<EnhancedAnalysisResult | null>(null);
     const [tailoringPlan, setTailoringPlan] = useState<TailoringPlan | null>(null);
-    const [useEnhancedAnalysis, setUseEnhancedAnalysis] = useState(true);
+    const [useEnhancedAnalysis] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Mock resume data - in a real app, we would parse the uploaded file
