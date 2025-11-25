@@ -8,6 +8,7 @@ import Applications from './pages/Applications'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
 import { GoogleAuthCallback } from './components/GoogleAuthCallback'
+import JobFitAnalyzer from './components/analyzer/JobFitAnalyzer'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -49,6 +50,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="applications" element={<Applications />} />
+            <Route path="analyzer" element={<JobFitAnalyzer />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

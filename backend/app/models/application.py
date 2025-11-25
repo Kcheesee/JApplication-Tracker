@@ -64,6 +64,18 @@ class Application(Base):
     interview_questions = Column(Text, nullable=True)  # Questions asked or to prepare
     interview_notes = Column(Text, nullable=True)  # Notes from interviews
     company_research = Column(Text, nullable=True)  # Research about the company
+    
+    # Job Fit Analysis (from Job Fit Analyzer)
+    fit_analysis_score = Column(Float, nullable=True)  # 0.0 - 1.0
+    fit_analysis_label = Column(String, nullable=True)  # "Strong Match", "Good Match", etc.
+    fit_analysis_should_apply = Column(String, nullable=True)  # Store as string for boolean
+    fit_analysis_recommendation = Column(Text, nullable=True)  # Human-readable recommendation
+    fit_analysis_data = Column(Text, nullable=True)  # Full analysis as JSON
+    fit_analysis_date = Column(DateTime(timezone=True), nullable=True)  # When analysis was done
+    
+    # Resume Tailoring Plan
+    tailoring_plan = Column(Text, nullable=True)  # Tailoring suggestions as JSON
+    tailoring_plan_date = Column(DateTime(timezone=True), nullable=True)  # When plan was generated
 
     # Metadata
     email_id = Column(String, nullable=True)  # Gmail message ID for reference

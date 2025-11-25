@@ -1,0 +1,80 @@
+{
+    "name": "Alex Junior",
+    "email": "alex.junior@example.com",
+    "location": "Remote",
+    "summary": "Recent computer science graduate with internship experience and strong foundation in Python and web development.",
+    "experiences": [
+        {
+            "title": "Software Engineering Intern",
+            "company": "Tech Startup",
+            "start": "2023-06",
+            "end": "2023-08",
+            "bullets": [
+                "Built REST API endpoints using Flask and SQLite",
+                "Created React components for user dashboard",
+                "Fixed bugs and wrote unit tests for Python backend"
+            ]
+        },
+        {
+            "title": "Teaching Assistant",
+            "company": "University CS Department",
+            "start": "2022-09",
+            "end": "2023-05",
+            "bullets": [
+                "Assisted in teaching Data Structures course (Python)",
+                "Held office hours and helped students debug code",
+                "Graded assignments and provided feedback"
+            ]
+        }
+    ],
+    "technical_skills": [
+        "Python",
+        "JavaScript",
+        "Flask",
+        "React",
+        "HTML/CSS",
+        "Git",
+        "SQLite",
+        "REST APIs"
+    ],
+    "soft_skills": [
+        "Communication",
+        "Problem Solving",
+        "Teamwork",
+        "Teaching"
+    ],
+    "education": [
+        {
+            "degree": "BS Computer Science",
+            "school": "State University",
+            "year": 2024,
+            "gpa": 3.6
+        }
+    ],
+    "projects": [
+        {
+            "name": "Personal Portfolio Website",
+            "description": "Built personal website using React and deployed to Netlify",
+            "technologies": [
+                "React",
+                "JavaScript",
+                "CSS"
+            ],
+            "url": "https://alexjunior.dev"
+        },
+        {
+            "name": "Task Manager CLI",
+            "description": "Command-line task management tool in Python",
+            "technologies": [
+                "Python",
+                "SQLite"
+            ],
+            "url": "https://github.com/alexjunior/task-cli"
+        }
+    ],
+    "certifications": [],
+    "total_years_experience": 1,
+    "industries": [
+        "Technology"
+    ]
+}

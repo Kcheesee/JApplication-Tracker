@@ -37,6 +37,13 @@ Track every application, never miss a follow-up, and get hired faster with AI-po
 - **Interview Prep**: Store questions, notes, and company research
 - **Network Contacts**: Track referrals and recruiter relationships
 
+### 🎯 **Job Fit Analyzer**
+- **AI Matching**: Instantly score your resume against any job description
+- **Gap Analysis**: Identify missing skills and keywords
+- **Tailoring Plans**: Get specific, actionable advice to improve your match score
+- **Resume Upload**: Drag-and-drop resume analysis
+- **Quick Check**: Fast compatibility assessment for any role
+
 ### 📱 **Modern, Responsive UI**
 - **Beautiful Design**: Built with shadcn/ui and Tailwind CSS
 - **Mobile-Friendly**: Works perfectly on phones and tablets
@@ -374,6 +381,7 @@ pip install -r requirements.txt --force-reinstall
 ✅ Enhanced dashboard analytics
 ✅ Duplicate detection
 ✅ Data export (CSV, JSON, PDF)
+✅ **Job Fit Analyzer** (New!)
 
 ### Improvements
 ✅ Better error handling in Gmail sync
