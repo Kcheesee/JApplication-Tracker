@@ -1,0 +1,88 @@
+{
+    "name": "Jane Senior",
+    "email": "jane.senior@example.com",
+    "location": "San Francisco, CA",
+    "summary": "Experienced software engineer with 8 years building scalable backend systems and APIs. Expert in Python, FastAPI, and cloud infrastructure.",
+    "experiences": [
+        {
+            "title": "Senior Software Engineer",
+            "company": "CloudTech Inc",
+            "start": "2020-03",
+            "end": "2024-11",
+            "bullets": [
+                "Architected and built microservices platform serving 10M+ requests/day using FastAPI and PostgreSQL",
+                "Led team of 4 engineers in designing RESTful APIs for customer-facing products",
+                "Implemented CI/CD pipelines with GitHub Actions, reducing deployment time by 60%",
+                "Mentored 3 junior engineers on Python best practices and system design",
+                "Migrated monolithic application to Docker/Kubernetes, improving scalability"
+            ]
+        },
+        {
+            "title": "Software Engineer",
+            "company": "StartupXYZ",
+            "start": "2017-06",
+            "end": "2020-02",
+            "bullets": [
+                "Developed REST APIs using Flask and PostgreSQL",
+                "Built React frontend components for internal dashboards",
+                "Implemented authentication and authorization with JWT",
+                "Optimized database queries, reducing response times by 40%"
+            ]
+        }
+    ],
+    "technical_skills": [
+        "Python",
+        "FastAPI",
+        "Flask",
+        "Django",
+        "PostgreSQL",
+        "MongoDB",
+        "Docker",
+        "Kubernetes",
+        "AWS",
+        "GCP",
+        "React",
+        "REST APIs",
+        "GraphQL",
+        "Git",
+        "CI/CD",
+        "Microservices"
+    ],
+    "soft_skills": [
+        "Leadership",
+        "Communication",
+        "Mentoring",
+        "Code Review",
+        "Agile",
+        "Problem Solving"
+    ],
+    "education": [
+        {
+            "degree": "BS Computer Science",
+            "school": "Stanford University",
+            "year": 2017,
+            "gpa": 3.8
+        }
+    ],
+    "projects": [
+        {
+            "name": "Open Source API Framework",
+            "description": "Contributed to popular Python API framework",
+            "technologies": [
+                "Python",
+                "FastAPI",
+                "OpenAPI"
+            ],
+            "url": "https://github.com/example/api-framework"
+        }
+    ],
+    "certifications": [
+        "AWS Certified Solutions Architect"
+    ],
+    "total_years_experience": 8,
+    "industries": [
+        "SaaS",
+        "Cloud Infrastructure",
+        "Developer Tools"
+    ]
+}
