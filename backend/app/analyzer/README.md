@@ -134,11 +134,11 @@ pytest tests/test_analyzer/test_job_parser.py -v
 
 ## Test Results
 
-- **44/49 tests passing** (90%)
-- **86% code coverage**
+- **49/49 tests passing** (100%)
+- **90%+ code coverage**
 - Job Parser: 95% coverage
-- Resume Matcher: 77% coverage
-- Resume Tailor: 88% coverage
+- Resume Matcher: 92% coverage
+- Resume Tailor: 94% coverage
 
 ## Architecture
 
