@@ -13,7 +13,11 @@ interface TailoringActionsProps {
     keywordsToAdd: string[];
 }
 
-export default function TailoringActions({ actions, keywordsToAdd }: TailoringActionsProps) {
+export default function TailoringActions({ actions = [], keywordsToAdd = [] }: TailoringActionsProps) {
+    // Defensive: ensure arrays exist
+    const safeActions = actions || [];
+    const safeKeywords = keywordsToAdd || [];
+
     const getActionIcon = (type: string) => {
         switch (type) {
             case 'add_skill': return <Plus className="w-4 h-4" />;
@@ -35,11 +39,11 @@ export default function TailoringActions({ actions, keywordsToAdd }: TailoringAc
     return (
         <div className="space-y-6">
             {/* Keywords Section */}
-            {keywordsToAdd.length > 0 && (
+            {safeKeywords.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Missing Keywords</h3>
                     <div className="flex flex-wrap gap-2">
-                        {keywordsToAdd.map((keyword, idx) => (
+                        {safeKeywords.map((keyword, idx) => (
                             <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                                 <Plus className="w-3 h-3 mr-1" />
                                 {keyword}
@@ -58,7 +62,11 @@ export default function TailoringActions({ actions, keywordsToAdd }: TailoringAc
                     <h3 className="text-lg font-medium text-gray-900">Tailoring Plan</h3>
                 </div>
                 <div className="divide-y divide-gray-200">
-                    {actions.map((action, index) => (
+                    {safeActions.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                            No tailoring actions generated yet.
+                        </div>
+                    ) : safeActions.map((action, index) => (
                         <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
