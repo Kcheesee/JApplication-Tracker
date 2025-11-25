@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.database import init_db
+from app.database import init_db, run_migrations
 from app.routes import auth, applications, sync, settings, llm, oauth, cron, analyzer
 import logging
 import sys
@@ -75,7 +75,9 @@ def startup_event():
 
     try:
         init_db()
-        logger.info("Database initialized successfully")
+        logger.info("Database tables initialized")
+        run_migrations()
+        logger.info("Database migrations complete")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}", exc_info=True)
         raise

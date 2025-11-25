@@ -20,7 +20,7 @@ def upgrade():
     # Add fit analysis columns to applications table
     op.add_column('applications', sa.Column('fit_analysis_score', sa.Float(), nullable=True))
     op.add_column('applications', sa.Column('fit_analysis_label', sa.String(), nullable=True))
-    op.add_column('applications', sa.Column('fit_analysis_should_apply', sa.Boolean(), nullable=True))
+    op.add_column('applications', sa.Column('fit_analysis_should_apply', sa.String(10), nullable=True))
     op.add_column('applications', sa.Column('fit_analysis_recommendation', sa.Text(), nullable=True))
     op.add_column('applications', sa.Column('fit_analysis_data', sa.Text(), nullable=True))  # JSON data
     op.add_column('applications', sa.Column('fit_analysis_date', sa.DateTime(timezone=True), nullable=True))
