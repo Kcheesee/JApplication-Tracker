@@ -137,3 +137,14 @@ htmlcov/
 # Extension builds
 extension/icons/*.png
 extension.zip
+
+# Internal Development Docs (keep README, CONTRIBUTING, CHANGELOG only)
+ANALYZER_DEV_GUIDE.md
+CROSS_DOMAIN_AUTH.md
+JOB_FIT_ANALYZER_SPEC.md
+JOB_FIT_DEMO_OUTPUT.md
+SECURITY_IMPROVEMENTS.md
+docs/archive/
+docs/qa-screenshots/
+docs/ARCHITECTURE.md
+docs/setup/
