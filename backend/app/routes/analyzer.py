@@ -1,5 +1,5 @@
 """API routes for Job Fit Analyzer."""
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -8,6 +8,7 @@ import json
 from bs4 import BeautifulSoup
 
 from ..database import get_db
+from ..services.resume_parser import ResumeParser, ResumeData as ParsedResumeData
 from ..models.user import User
 from ..models.application import Application
 from ..auth.security import get_current_user
@@ -582,6 +583,79 @@ async def generate_tailoring_plan(
         )
 
 
+@router.post("/parse-resume")
+async def parse_resume_pdf(
+    resume_file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Parse a PDF resume into structured data using LLM.
+
+    Accepts a PDF file upload and returns structured ResumeData
+    that can be used for job fit analysis.
+    """
+    try:
+        # Validate file type
+        if not resume_file.filename.lower().endswith('.pdf'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only PDF files are supported"
+            )
+
+        # Read file contents
+        pdf_bytes = await resume_file.read()
+
+        if len(pdf_bytes) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Empty file uploaded"
+            )
+
+        # Get user's API key for LLM parsing
+        settings = get_settings()
+        user_settings = db.query(UserSettings).filter(
+            UserSettings.user_id == current_user.id
+        ).first()
+
+        anthropic_key = None
+        if user_settings:
+            anthropic_key = get_llm_api_key(user_settings, "anthropic")
+
+        if not anthropic_key:
+            anthropic_key = settings.ANTHROPIC_API_KEY
+
+        if not anthropic_key:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No Anthropic API key configured. Please add your API key in settings."
+            )
+
+        # Parse resume
+        parser = ResumeParser(api_key=anthropic_key)
+        resume_data = parser.parse_resume(pdf_bytes)
+
+        return {
+            "success": True,
+            "resume_data": resume_data.to_dict()
+        }
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error parsing resume: {str(e)}"
+        )
+
+
 @router.post("/quick-check", response_model=QuickCheckResponse)
 async def quick_compatibility_check(
     request: QuickCheckRequest,
@@ -590,7 +664,7 @@ async def quick_compatibility_check(
 ):
     """
     Quick compatibility check between job description and resume summary.
-    
+
     Useful for filtering jobs before full analysis.
     """
     try:

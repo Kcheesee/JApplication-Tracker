@@ -202,16 +202,9 @@ export default function JobFitAnalyzer() {
     const [useEnhancedAnalysis] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Mock resume data - in a real app, we would parse the uploaded file
-    const mockResumeData = {
-        name: "User",
-        email: "user@example.com",
-        location: "Remote",
-        technical_skills: ["Python", "React", "TypeScript", "SQL"],
-        total_years_experience: 5,
-        experiences: [],
-        education: []
-    };
+    // State to store parsed resume data
+    const [parsedResumeData, setParsedResumeData] = useState<any>(null);
+    const [parsingResume, setParsingResume] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -222,6 +215,7 @@ export default function JobFitAnalyzer() {
 
     const handleRemoveFile = () => {
         setResumeFile(null);
+        setParsedResumeData(null); // Clear cached parsed data
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -245,19 +239,47 @@ export default function JobFitAnalyzer() {
         }
 
         setLoading(true);
+        setParsingResume(true);
         setError(null);
         setAnalysis(null);
         setTailoringPlan(null);
 
         try {
-            // Use enhanced analysis endpoint for LLM-powered deep analysis
+            // Step 1: Parse the PDF resume
+            let resumeData = parsedResumeData;
+
+            // Only parse if we don't have cached data or file changed
+            if (!resumeData || resumeFile.name !== resumeData._fileName) {
+                const formData = new FormData();
+                formData.append('resume_file', resumeFile);
+
+                const parseResponse = await apiClient.post('/api/analyzer/parse-resume', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+
+                if (!parseResponse.data.success) {
+                    throw new Error(parseResponse.data.detail || 'Failed to parse resume');
+                }
+
+                resumeData = {
+                    ...parseResponse.data.resume_data,
+                    _fileName: resumeFile.name // Cache file name to detect changes
+                };
+                setParsedResumeData(resumeData);
+            }
+
+            setParsingResume(false);
+
+            // Step 2: Run job fit analysis with parsed resume
             const endpoint = useEnhancedAnalysis
                 ? '/api/analyzer/analyze-enhanced'
                 : '/api/analyzer/analyze';
 
             // Build request based on input mode
             const requestData: Record<string, any> = {
-                resume_data: mockResumeData,
+                resume_data: resumeData,
                 use_llm: useEnhancedAnalysis
             };
 
@@ -276,13 +298,14 @@ export default function JobFitAnalyzer() {
             setLoading(false);
         } catch (err: any) {
             console.error("Analysis failed:", err);
+            setParsingResume(false);
             setError(err.response?.data?.detail || err.message || 'An error occurred. Make sure the backend is running.');
             setLoading(false);
         }
     };
 
     const handleGenerateTailoring = async () => {
-        if (!analysis || !jobUrl) return;
+        if (!analysis || !jobUrl || !parsedResumeData) return;
 
         setLoading(true);
         try {
@@ -304,7 +327,7 @@ export default function JobFitAnalyzer() {
 
             const response = await apiClient.post('/api/analyzer/tailor', {
                 job_url: jobUrl,
-                resume_data: mockResumeData,
+                resume_data: parsedResumeData,
                 analysis: analysisForTailoring
             });
 
@@ -501,7 +524,7 @@ Include:
                             className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                         >
                             {loading ? <Loader className="animate-spin h-5 w-5 mr-2" /> : null}
-                            {loading ? 'Analyzing...' : 'Analyze Job Fit'}
+                            {loading ? (parsingResume ? 'Parsing Resume...' : 'Analyzing...') : 'Analyze Job Fit'}
                         </button>
                     </div>
                 </form>

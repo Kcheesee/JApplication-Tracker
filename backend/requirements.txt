@@ -38,6 +38,7 @@ email-validator==2.1.0
 python-dateutil==2.8.2
 beautifulsoup4==4.12.3
 lxml==5.1.0
+pdfplumber==0.10.3
 
 # CORS
 fastapi-cors==0.0.6
