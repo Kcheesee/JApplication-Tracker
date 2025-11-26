@@ -200,18 +200,78 @@ class JobPostingParser:
     def _parse_requirement_line(self, line: str) -> Optional[JobRequirement]:
         """Parse a single requirement line."""
         original_line = line.strip()
-        
+
         # Skip empty or very short lines
         if not original_line or len(original_line) < 10:
             return None
-        
+
         # Remove bullet points and list numbering, but NOT years (like "5+")
         # Only match bullets at start: "- ", "* ", "• ", or "1. ", "2. " etc
         cleaned_line = re.sub(r'^[\-\*\•]\s*', '', original_line)  #  Remove bullet markers
         cleaned_line = re.sub(r'^\d+\.\s+', '', cleaned_line)  # Remove numbered list markers like "1. "
-        
+
         if not cleaned_line or len(cleaned_line) < 10:
             return None
+
+        line_lower = cleaned_line.lower()
+
+        # Skip section headers (short lines that are just titles)
+        section_headers = [
+            "about the role", "about the company", "about us", "about anthropic",
+            "responsibilities", "requirements", "qualifications", "what you'll do",
+            "who you are", "what we're looking for", "nice to have", "benefits",
+            "perks", "compensation", "salary", "location", "the role", "the team",
+            "your impact", "job description", "overview", "summary", "apply now",
+            "how to apply", "equal opportunity", "diversity", "inclusion"
+        ]
+        if any(line_lower == header or line_lower.startswith(header + ":") for header in section_headers):
+            return None
+
+        # Skip lines that are just locations (city, state patterns)
+        location_pattern = r'^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:;\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})*$'
+        if re.match(location_pattern, cleaned_line):
+            return None
+
+        # Skip very long lines (likely descriptive paragraphs, not requirements)
+        # Real requirements are usually concise (under 300 chars)
+        if len(cleaned_line) > 400:
+            return None
+
+        # Skip lines that don't look like requirements
+        # Requirements typically have: years, skills, experience, degree, ability, knowledge, etc.
+        requirement_signals = [
+            "experience", "years", "year", "proficient", "proficiency", "knowledge",
+            "ability", "skilled", "familiarity", "understanding", "degree", "bachelor",
+            "master", "phd", "certification", "certified", "expertise", "expert",
+            "strong", "excellent", "demonstrated", "proven", "track record",
+            "background", "history", "comfortable", "capable", "competent",
+            "must have", "required", "preferred", "nice to have", "bonus",
+            "minimum", "at least", "ideally", "+", "or more", "working with",
+            "hands-on", "deep understanding", "solid", "thorough"
+        ]
+
+        # Also check for technical keywords as signals
+        has_requirement_signal = any(signal in line_lower for signal in requirement_signals)
+        has_tech_keyword = any(kw in line_lower for kw in self.TECH_KEYWORDS)
+
+        # Skip if it's a long line with no requirement signals (likely descriptive prose)
+        if len(cleaned_line) > 150 and not has_requirement_signal and not has_tech_keyword:
+            return None
+
+        # Skip company mission statements and general descriptions
+        non_requirement_patterns = [
+            r"^our (mission|team|company|vision|goal)",
+            r"^we (are|want|believe|build|create|strive)",
+            r"^(this is|you will be|you'll be) (a|an|the)",
+            r"^as (a|an|the) .+, you will",
+            r"committed to|passionate about|excited about",
+            r"equal opportunity|diversity|inclusive",
+        ]
+        for pattern in non_requirement_patterns:
+            if re.search(pattern, line_lower):
+                # Allow if it still has requirement signals
+                if not has_requirement_signal:
+                    return None
         
         # Determine if required or preferred
         req_type = self._detect_requirement_type(cleaned_line)
