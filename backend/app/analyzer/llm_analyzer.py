@@ -340,8 +340,16 @@ Be specific, honest, and actionable. Don't sugarcoat gaps but always provide con
     async def _call_llm(self, prompt: str) -> str:
         """Call LLM with prompt."""
         try:
-            if hasattr(self.llm, 'client'):
-                # Anthropic provider
+            # Direct Anthropic client (has .messages attribute)
+            if hasattr(self.llm, 'messages'):
+                response = self.llm.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=4096,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                return response.content[0].text
+            # Wrapped provider with .client attribute
+            elif hasattr(self.llm, 'client') and hasattr(self.llm.client, 'messages'):
                 response = self.llm.client.messages.create(
                     model="claude-sonnet-4-20250514",
                     max_tokens=4096,
