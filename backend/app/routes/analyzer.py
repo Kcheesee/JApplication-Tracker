@@ -207,6 +207,11 @@ async def analyze_job_fit_enhanced(
 
         # Build response
         return EnhancedAnalyzeResponse(
+            # Job info
+            job_title=job.title,
+            company=job.company,
+            location=job.location,
+
             # Enhanced fields
             overall_score=enhanced_analysis.overall_score,
             confidence_score=enhanced_analysis.confidence_score,

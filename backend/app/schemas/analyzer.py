@@ -159,6 +159,11 @@ class EnhancedAnalyzeRequest(BaseModel):
 
 class EnhancedAnalyzeResponse(BaseModel):
     """Response from enhanced LLM-powered analysis."""
+    # Job info
+    job_title: str = "Unknown Position"
+    company: str = "Unknown Company"
+    location: str = ""
+
     # Core scoring
     overall_score: float
     confidence_score: float

@@ -4,7 +4,7 @@ import MatchScoreDisplay from './MatchScoreDisplay';
 import RequirementBreakdown from './RequirementBreakdown';
 import TailoringActions from './TailoringActions';
 import QuickCheck from './QuickCheck';
-import { Search, FileText, Wand2, Loader, AlertCircle, Upload, File as FileIcon, X, Target, TrendingUp, Shield, Lightbulb, AlertTriangle, CheckCircle2, BarChart3, List, Check, XCircle, MinusCircle, Tag } from 'lucide-react';
+import { Search, FileText, Wand2, Loader, AlertCircle, Upload, File as FileIcon, X, Target, TrendingUp, Shield, Lightbulb, AlertTriangle, CheckCircle2, BarChart3, List, Check, XCircle, MinusCircle, Tag, Building2, MapPin, Briefcase, ExternalLink, Award, Zap } from 'lucide-react';
 
 // Enhanced types for LLM-powered analysis
 interface DetailedGap {
@@ -34,6 +34,11 @@ interface StrengthHighlight {
 
 // Enhanced analysis result from LLM-powered endpoint
 interface EnhancedAnalysisResult {
+    // Job info
+    job_title?: string;
+    company?: string;
+    location?: string;
+
     // Core scoring
     overall_score: number;
     confidence_score: number;
@@ -133,6 +138,11 @@ const getMatchStrengthStyle = (strength: string) => {
 
 // Default demo data to ensure analysis always has meaningful content
 const getDemoAnalysisData = (): EnhancedAnalysisResult => ({
+    // Job info
+    job_title: "Senior Software Engineer",
+    company: "Tech Company",
+    location: "San Francisco, CA (Hybrid)",
+
     overall_score: 0.72,
     confidence_score: 0.85,
     fit_tier: "Good",
@@ -651,6 +661,52 @@ export default function JobFitAnalyzer() {
             {/* Results Section */}
             {analysis && (
                 <div className="space-y-6">
+                    {/* Job Info Header */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 text-indigo-200 text-sm mb-1">
+                                    <Briefcase className="w-4 h-4" />
+                                    <span>Analyzing Position</span>
+                                </div>
+                                <h3 className="text-2xl font-bold">
+                                    {analysis.job_title || 'Position'}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-4 mt-2 text-indigo-100">
+                                    {analysis.company && (
+                                        <div className="flex items-center gap-1.5">
+                                            <Building2 className="w-4 h-4" />
+                                            <span>{analysis.company}</span>
+                                        </div>
+                                    )}
+                                    {analysis.location && (
+                                        <div className="flex items-center gap-1.5">
+                                            <MapPin className="w-4 h-4" />
+                                            <span>{analysis.location}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="text-center bg-white/10 backdrop-blur rounded-lg px-4 py-2">
+                                    <div className="text-3xl font-bold">{Math.round((analysis.overall_score || analysis.match_score) * 100)}%</div>
+                                    <div className="text-xs text-indigo-200 uppercase tracking-wide">Match Score</div>
+                                </div>
+                                {jobUrl && (
+                                    <a
+                                        href={jobUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                        title="View Original Posting"
+                                    >
+                                        <ExternalLink className="w-5 h-5" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Demo Mode Banner */}
                     {isUsingDemoData && (
                         <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
@@ -750,20 +806,27 @@ export default function JobFitAnalyzer() {
                                     shouldApply={analysis.should_apply}
                                 />
 
-                                {/* Category Scores */}
+                                {/* Category Scores - Improved Design */}
                                 {analysis.category_scores && Object.keys(analysis.category_scores).length > 0 && (
-                                    <div className="bg-white rounded-lg shadow p-6">
-                                        <h4 className="font-medium text-gray-900 mb-4">Category Breakdown</h4>
-                                        <div className="space-y-3">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                            <h4 className="font-semibold text-gray-900 flex items-center">
+                                                <BarChart3 className="w-5 h-5 text-indigo-500 mr-2" />
+                                                Category Breakdown
+                                            </h4>
+                                        </div>
+                                        <div className="p-6 space-y-4">
                                             {Object.entries(analysis.category_scores).map(([category, score]) => (
-                                                <div key={category}>
-                                                    <div className="flex justify-between text-sm mb-1">
-                                                        <span className="text-gray-600 capitalize">{category.replace(/_/g, ' ')}</span>
-                                                        <span className="font-medium">{score}%</span>
+                                                <div key={category} className="group">
+                                                    <div className="flex justify-between text-sm mb-2">
+                                                        <span className="text-gray-700 font-medium capitalize">{category.replace(/_/g, ' ')}</span>
+                                                        <span className={`font-bold ${score >= 70 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                                            {score}%
+                                                        </span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                                                         <div
-                                                            className={`h-2 rounded-full ${score >= 70 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                            className={`h-2.5 rounded-full transition-all duration-500 ${score >= 70 ? 'bg-gradient-to-r from-green-400 to-green-500' : score >= 50 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' : 'bg-gradient-to-r from-red-400 to-red-500'}`}
                                                             style={{ width: `${score}%` }}
                                                         />
                                                     </div>
@@ -773,59 +836,95 @@ export default function JobFitAnalyzer() {
                                     </div>
                                 )}
 
-                                {/* Risk Assessment */}
+                                {/* Risk Assessment - Improved Design */}
                                 {analysis.rejection_risk && (
-                                    <div className="bg-white rounded-lg shadow p-6">
-                                        <h4 className="font-medium text-gray-900 mb-3">Risk Assessment</h4>
-                                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRiskColor(analysis.rejection_risk)}`}>
-                                            <Shield className="w-4 h-4 mr-1" />
-                                            {analysis.rejection_risk} Risk
+                                    <div className={`rounded-xl overflow-hidden shadow-sm border ${
+                                        analysis.rejection_risk?.toLowerCase() === 'high' ? 'border-red-200 bg-red-50' :
+                                        analysis.rejection_risk?.toLowerCase() === 'medium' ? 'border-yellow-200 bg-yellow-50' :
+                                        'border-green-200 bg-green-50'
+                                    }`}>
+                                        <div className={`px-6 py-4 ${
+                                            analysis.rejection_risk?.toLowerCase() === 'high' ? 'bg-red-100' :
+                                            analysis.rejection_risk?.toLowerCase() === 'medium' ? 'bg-yellow-100' :
+                                            'bg-green-100'
+                                        }`}>
+                                            <h4 className="font-semibold text-gray-900 flex items-center">
+                                                <Shield className={`w-5 h-5 mr-2 ${
+                                                    analysis.rejection_risk?.toLowerCase() === 'high' ? 'text-red-600' :
+                                                    analysis.rejection_risk?.toLowerCase() === 'medium' ? 'text-yellow-600' :
+                                                    'text-green-600'
+                                                }`} />
+                                                Risk Assessment
+                                            </h4>
                                         </div>
-                                        {analysis.rejection_reasons?.length > 0 && (
-                                            <ul className="mt-3 text-sm text-gray-600 space-y-1">
-                                                {analysis.rejection_reasons.map((reason, i) => (
-                                                    <li key={i} className="flex items-start">
-                                                        <span className="text-red-400 mr-2">•</span>
-                                                        {reason}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                        <div className="p-6">
+                                            <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${getRiskColor(analysis.rejection_risk)}`}>
+                                                {analysis.rejection_risk} Risk
+                                            </div>
+                                            {analysis.rejection_reasons?.length > 0 && (
+                                                <ul className="mt-4 space-y-2">
+                                                    {analysis.rejection_reasons.map((reason, i) => (
+                                                        <li key={i} className="flex items-start text-sm text-gray-700">
+                                                            <AlertTriangle className="w-4 h-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                            {reason}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
                             {/* Right Column: Strengths & Quick View */}
                             <div className="lg:col-span-2 space-y-6">
-                                {/* Strengths */}
+                                {/* Strengths - Improved Design */}
                                 {analysis.strengths?.length > 0 && (
-                                    <div className="bg-white rounded-lg shadow p-6">
-                                        <h4 className="font-medium text-gray-900 mb-4 flex items-center">
-                                            <CheckCircle2 className="w-5 h-5 text-green-500 mr-2" />
-                                            Your Strengths ({analysis.strengths.length})
-                                        </h4>
-                                        <div className="space-y-4">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                        <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
+                                            <h4 className="font-semibold text-gray-900 flex items-center">
+                                                <Award className="w-5 h-5 text-green-600 mr-2" />
+                                                Your Strengths
+                                                <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                                    {analysis.strengths.length}
+                                                </span>
+                                            </h4>
+                                        </div>
+                                        <div className="divide-y divide-gray-100">
                                             {analysis.strengths.map((strength) => (
-                                                <div key={strength.strength_id} className="border-l-4 border-green-400 pl-4 py-2">
-                                                    <h5 className="font-medium text-gray-900">{strength.title}</h5>
-                                                    <p className="text-sm text-gray-600 mt-1">{strength.description}</p>
-                                                    <p className="text-sm text-green-700 mt-2">
-                                                        <TrendingUp className="w-4 h-4 inline mr-1" />
-                                                        {strength.competitive_advantage}
-                                                    </p>
+                                                <div key={strength.strength_id} className="p-6 hover:bg-gray-50 transition-colors">
+                                                    <div className="flex items-start gap-4">
+                                                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                            <Zap className="w-5 h-5 text-green-600" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h5 className="font-semibold text-gray-900">{strength.title}</h5>
+                                                            <p className="text-sm text-gray-600 mt-1">{strength.description}</p>
+                                                            <div className="mt-3 flex items-start gap-2 p-3 bg-green-50 rounded-lg">
+                                                                <TrendingUp className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                                <p className="text-sm text-green-800 font-medium">
+                                                                    {strength.competitive_advantage}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Differentiators */}
+                                {/* Differentiators - Improved Design */}
                                 {analysis.differentiators?.length > 0 && (
-                                    <div className="bg-white rounded-lg shadow p-6">
-                                        <h4 className="font-medium text-gray-900 mb-3">What Sets You Apart</h4>
+                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+                                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                                            <Target className="w-5 h-5 text-indigo-600 mr-2" />
+                                            What Sets You Apart
+                                        </h4>
                                         <div className="flex flex-wrap gap-2">
                                             {analysis.differentiators.map((diff, i) => (
-                                                <span key={i} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800">
+                                                <span key={i} className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white text-indigo-700 border border-indigo-200 shadow-sm">
+                                                    <CheckCircle2 className="w-4 h-4 mr-1.5 text-indigo-500" />
                                                     {diff}
                                                 </span>
                                             ))}
@@ -833,11 +932,18 @@ export default function JobFitAnalyzer() {
                                     </div>
                                 )}
 
-                                {/* Competitive Position */}
+                                {/* Competitive Position - Improved Design */}
                                 {analysis.competitive_position && (
-                                    <div className="bg-gray-50 rounded-lg p-6">
-                                        <h4 className="font-medium text-gray-900 mb-2">Competitive Position</h4>
-                                        <p className="text-gray-700">{analysis.competitive_position}</p>
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                        <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
+                                            <h4 className="font-semibold text-gray-900 flex items-center">
+                                                <TrendingUp className="w-5 h-5 text-blue-600 mr-2" />
+                                                Competitive Position
+                                            </h4>
+                                        </div>
+                                        <div className="p-6">
+                                            <p className="text-gray-700 leading-relaxed">{analysis.competitive_position}</p>
+                                        </div>
                                     </div>
                                 )}
 
