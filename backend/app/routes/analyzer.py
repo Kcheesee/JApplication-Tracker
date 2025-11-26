@@ -30,6 +30,8 @@ from ..analyzer.resume_matcher import ResumeMatcher, ResumeData, MatchStrength
 from ..analyzer.resume_tailor import ResumeTailor
 from ..analyzer.llm_analyzer import LLMFitAnalyzer, analysis_to_dict
 from ..config import get_settings
+from ..models.user_settings import UserSettings
+from ..utils.api_key_helper import get_llm_api_key
 
 
 router = APIRouter(prefix="/api/analyzer", tags=["Job Fit Analyzer"])
@@ -173,9 +175,23 @@ async def analyze_job_fit_enhanced(
 
         # Initialize LLM analyzer if API key available
         llm_provider = None
-        if request.use_llm and settings.ANTHROPIC_API_KEY:
-            from anthropic import Anthropic
-            llm_provider = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        if request.use_llm:
+            # Get user's settings to retrieve their stored API key
+            user_settings = db.query(UserSettings).filter(
+                UserSettings.user_id == current_user.id
+            ).first()
+
+            # Get user's Anthropic API key (falls back to env var if not set)
+            anthropic_key = None
+            if user_settings:
+                anthropic_key = get_llm_api_key(user_settings, "anthropic")
+            else:
+                # Fallback to environment variable if user has no settings
+                anthropic_key = settings.ANTHROPIC_API_KEY
+
+            if anthropic_key:
+                from anthropic import Anthropic
+                llm_provider = Anthropic(api_key=anthropic_key)
 
         # Perform enhanced analysis
         analyzer = LLMFitAnalyzer(llm_provider=llm_provider)
