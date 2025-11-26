@@ -227,6 +227,58 @@ class JobPostingParser:
         if any(line_lower == header or line_lower.startswith(header + ":") for header in section_headers):
             return None
 
+        # Skip "intro" headers that introduce requirements but aren't requirements themselves
+        intro_headers = [
+            "you may be a good fit if",
+            "you might be a good fit if",
+            "the ideal candidate",
+            "what we need",
+            "what you need",
+            "you should have",
+            "required skills",
+            "minimum qualifications",
+            "basic qualifications",
+            "preferred qualifications",
+            "you will",
+            "you'll",
+            "in this role",
+            "as a",
+        ]
+        if any(line_lower.startswith(header) for header in intro_headers):
+            return None
+
+        # Skip job titles (short capitalized lines with role keywords)
+        job_title_keywords = [
+            "manager", "engineer", "developer", "analyst", "designer", "director",
+            "lead", "architect", "specialist", "coordinator", "associate", "consultant",
+            "administrator", "executive", "officer", "representative", "scientist",
+            "researcher", "strategist", "planner", "supervisor"
+        ]
+        # Job titles are typically short (under 60 chars) and contain a role keyword
+        if len(cleaned_line) < 60 and any(kw in line_lower for kw in job_title_keywords):
+            # Make sure it's not a requirement about experience
+            if not any(sig in line_lower for sig in ["experience", "years", "degree", "knowledge"]):
+                return None
+
+        # Skip responsibilities (lines starting with action verbs - describe what you DO, not what you NEED)
+        responsibility_verbs = [
+            "manage", "provide", "define", "enable", "lead", "build", "create",
+            "drive", "own", "develop", "collaborate", "coordinate", "ensure",
+            "monitor", "support", "deliver", "implement", "design", "execute",
+            "establish", "maintain", "oversee", "guide", "facilitate", "conduct",
+            "analyze", "assess", "evaluate", "prepare", "present", "report",
+            "communicate", "partner", "work with", "engage", "serve as",
+            "act as", "be responsible", "take ownership", "help", "contribute",
+            "identify", "track", "measure", "optimize", "improve", "streamline"
+        ]
+        # Check if line starts with an action verb (responsibility pattern)
+        for verb in responsibility_verbs:
+            if line_lower.startswith(verb + " ") or line_lower.startswith(verb + "ing "):
+                # This looks like a responsibility, not a requirement
+                # Exception: if it explicitly mentions "experience" or skills needed
+                if not any(sig in line_lower for sig in ["experience with", "knowledge of", "proficiency", "familiar with", "skilled in"]):
+                    return None
+
         # Skip lines that are just locations (city, state patterns)
         location_pattern = r'^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:;\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})*$'
         if re.match(location_pattern, cleaned_line):

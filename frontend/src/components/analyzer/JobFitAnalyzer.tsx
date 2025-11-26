@@ -136,212 +136,6 @@ const getMatchStrengthStyle = (strength: string) => {
     }
 };
 
-// Default demo data to ensure analysis always has meaningful content
-const getDemoAnalysisData = (): EnhancedAnalysisResult => ({
-    // Job info
-    job_title: "Senior Software Engineer",
-    company: "Tech Company",
-    location: "San Francisco, CA (Hybrid)",
-
-    overall_score: 0.72,
-    confidence_score: 0.85,
-    fit_tier: "Good",
-    executive_summary: "You're a solid candidate with strong Python skills and relevant experience. Key gaps in Kubernetes and leadership experience may require addressing, but your technical foundation is strong.",
-    key_verdict: "Worth applying - address Kubernetes gap in cover letter and emphasize technical leadership from past projects.",
-    gaps: [
-        {
-            gap_id: "gap_1",
-            category: "technical_skills",
-            severity: "significant",
-            requirement_text: "5+ years experience with Kubernetes in production",
-            your_level: "Basic understanding, no production experience",
-            required_level: "5+ years production experience",
-            gap_description: "The role requires extensive Kubernetes experience for managing containerized workloads at scale.",
-            impact_on_application: "May be filtered out by ATS or initial screening. Critical skill for day-to-day work.",
-            bridging_strategies: [
-                "Take CKA certification course (can complete in 4-6 weeks)",
-                "Set up personal K8s cluster and document learnings",
-                "Highlight Docker experience as transferable skill"
-            ],
-            time_to_bridge: "3-6 months for production-ready skills",
-            transferable_skills: ["Docker", "Container orchestration concepts", "CI/CD pipelines"],
-            talking_points: ["Discuss Docker experience and how it translates", "Show enthusiasm for learning K8s"]
-        },
-        {
-            gap_id: "gap_2",
-            category: "leadership",
-            severity: "moderate",
-            requirement_text: "Experience leading engineering teams",
-            your_level: "Individual contributor with mentorship experience",
-            required_level: "Direct team leadership",
-            gap_description: "Role involves managing 3-5 engineers and driving technical decisions.",
-            impact_on_application: "Not a dealbreaker but will be discussed in interviews.",
-            bridging_strategies: [
-                "Emphasize mentorship and code review leadership",
-                "Highlight project lead experiences",
-                "Discuss cross-team collaboration"
-            ],
-            time_to_bridge: "Could grow into role with support",
-            transferable_skills: ["Mentorship", "Code reviews", "Technical decision making"],
-            talking_points: ["Describe times you influenced team direction", "Show examples of helping junior devs grow"]
-        }
-    ],
-    strengths: [
-        {
-            strength_id: "str_1",
-            category: "technical_skills",
-            title: "Strong Python & React Foundation",
-            description: "5+ years with both technologies exceeds requirements",
-            evidence: ["5 years Python experience", "React in multiple projects"],
-            competitive_advantage: "Full-stack capability is rare - most candidates specialize in one area",
-            how_to_leverage: "Lead with full-stack examples in cover letter and interviews"
-        },
-        {
-            strength_id: "str_2",
-            category: "experience",
-            title: "Production System Experience",
-            description: "Background in high-scale systems aligns with role needs",
-            evidence: ["Previous work at scale"],
-            competitive_advantage: "Understanding of production concerns reduces ramp-up time",
-            how_to_leverage: "Share specific metrics from past systems (uptime, scale, performance)"
-        }
-    ],
-    category_scores: {
-        technical_skills: 78,
-        experience_level: 70,
-        domain_expertise: 65,
-        leadership: 55,
-        education: 80,
-        culture_fit: 75
-    },
-    application_strategy: "Apply within the next week. Lead with your Python/React strengths and address the Kubernetes gap proactively in your cover letter. Mention you're actively learning K8s through hands-on projects.",
-    cover_letter_focus: [
-        "Lead with full-stack Python/React accomplishments",
-        "Address Kubernetes gap - show you're actively learning",
-        "Highlight technical leadership through mentorship",
-        "Connect your experience to their specific product challenges"
-    ],
-    interview_prep: [
-        "Prepare system design answers showcasing Python backend architecture",
-        "Practice explaining K8s concepts even with limited experience",
-        "Have 2-3 leadership/mentorship stories ready",
-        "Research their tech stack and prepare relevant questions"
-    ],
-    questions_to_ask: [
-        "What does the K8s learning curve look like for new engineers?",
-        "How is the engineering team structured?",
-        "What's the biggest technical challenge the team is facing?"
-    ],
-    rejection_risk: "Medium",
-    rejection_reasons: [
-        "Kubernetes experience gap may trigger ATS filtering",
-        "Leadership experience below stated preference"
-    ],
-    mitigation_strategies: [
-        "Apply through referral if possible to bypass ATS",
-        "Proactively address gaps in cover letter",
-        "Highlight transferable skills prominently"
-    ],
-    competitive_position: "You're likely in the top 40% of applicants based on technical skills, but the K8s gap puts you below candidates with that specific experience. Your full-stack capabilities and Python depth are differentiators.",
-    differentiators: [
-        "Full-stack capability (Python + React)",
-        "Strong foundation in production systems",
-        "Demonstrated learning agility"
-    ],
-    match_score: 0.72,
-    match_label: "Good",
-    should_apply: true,
-    recommendation: "Worth applying - address Kubernetes gap in cover letter.",
-    matches: [
-        {
-            requirement_text: "5+ years of Python experience",
-            category: "required",
-            strength: "strong",
-            evidence: ["5 years Python development", "Python backend APIs"],
-            explanation: "Resume shows 5 years Python. Requirement: 5+ years. Exceeds requirement."
-        },
-        {
-            requirement_text: "React or Vue.js frontend experience",
-            category: "required",
-            strength: "strong",
-            evidence: ["React", "TypeScript"],
-            explanation: "React found in skills. Full-stack capability demonstrated."
-        },
-        {
-            requirement_text: "Experience with SQL databases",
-            category: "required",
-            strength: "match",
-            evidence: ["SQL", "PostgreSQL"],
-            explanation: "SQL skills listed. Database experience confirmed."
-        },
-        {
-            requirement_text: "REST API design and development",
-            category: "required",
-            strength: "match",
-            evidence: ["REST APIs", "FastAPI"],
-            explanation: "API development experience evident from tech stack."
-        },
-        {
-            requirement_text: "Kubernetes/container orchestration",
-            category: "required",
-            strength: "gap",
-            evidence: [],
-            explanation: "Docker mentioned but no Kubernetes/K8s experience found.",
-            suggestion: "Add any K8s exposure - even personal projects or certifications"
-        },
-        {
-            requirement_text: "CI/CD pipeline experience",
-            category: "required",
-            strength: "partial",
-            evidence: ["Git"],
-            explanation: "Git found, but no explicit CI/CD tools (Jenkins, GitHub Actions).",
-            suggestion: "Add CI/CD tools explicitly if you have experience"
-        },
-        {
-            requirement_text: "Experience leading engineering teams",
-            category: "preferred",
-            strength: "partial",
-            evidence: ["Mentorship"],
-            explanation: "Mentorship experience noted, but no direct team leadership.",
-            suggestion: "Highlight project lead or tech lead experiences"
-        },
-        {
-            requirement_text: "AWS or cloud platform experience",
-            category: "preferred",
-            strength: "gap",
-            evidence: [],
-            explanation: "No cloud platform experience mentioned.",
-            suggestion: "Add AWS/GCP/Azure if you have any exposure"
-        },
-        {
-            requirement_text: "Bachelor's degree in CS or related field",
-            category: "preferred",
-            strength: "match",
-            evidence: ["Bachelor's degree"],
-            explanation: "Education requirement met."
-        },
-        {
-            requirement_text: "Strong communication skills",
-            category: "preferred",
-            strength: "match",
-            evidence: ["Team collaboration", "Documentation"],
-            explanation: "Soft skills demonstrated in experience."
-        }
-    ],
-    strong_matches: 2,
-    matches_count: 4,
-    partial_matches: 2,
-    gap_count: 2,
-    dealbreakers: [],
-    top_suggestions: [
-        "Add Kubernetes/K8s if you have ANY exposure (even tutorials)",
-        "Explicitly mention CI/CD tools like GitHub Actions, Jenkins",
-        "Add AWS/GCP/Azure cloud experience",
-        "Highlight any team lead or project lead roles"
-    ],
-    missing_keywords: ["Kubernetes", "K8s", "AWS", "CI/CD", "Jenkins", "Team Lead", "Terraform"]
-});
-
 // Process API response - only use actual API data, no demo data merging
 const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): EnhancedAnalysisResult => {
     return {
@@ -406,7 +200,6 @@ export default function JobFitAnalyzer() {
     const [analysis, setAnalysis] = useState<EnhancedAnalysisResult | null>(null);
     const [tailoringPlan, setTailoringPlan] = useState<TailoringPlan | null>(null);
     const [useEnhancedAnalysis] = useState(true);
-    const [isUsingDemoData, setIsUsingDemoData] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Mock resume data - in a real app, we would parse the uploaded file
@@ -480,21 +273,10 @@ export default function JobFitAnalyzer() {
 
             // Process API response (no demo data merging)
             setAnalysis(processAnalysisData(response.data));
-            setIsUsingDemoData(false); // Real API data
             setLoading(false);
         } catch (err: any) {
             console.error("Analysis failed:", err);
-            // Fallback for demo if API fails or is not running
-            if (err.code === "ERR_NETWORK" || !err.response) {
-                // Use centralized demo data
-                setTimeout(() => {
-                    setAnalysis(getDemoAnalysisData());
-                    setIsUsingDemoData(true); // Using demo/fallback data
-                    setLoading(false);
-                }, 1500);
-                return;
-            }
-            setError(err.response?.data?.detail || err.message || 'An error occurred');
+            setError(err.response?.data?.detail || err.message || 'An error occurred. Make sure the backend is running.');
             setLoading(false);
         }
     };
@@ -530,29 +312,7 @@ export default function JobFitAnalyzer() {
             setActiveTab('tailor');
         } catch (err: any) {
             console.error("Tailoring failed:", err);
-            // Always fall back to demo data on any error
-            // This ensures the feature works even without backend
-            setTailoringPlan({
-                job_title: "Senior Software Engineer",
-                company: "Tech Company",
-                current_score: analysis?.match_score || 0.72,
-                projected_score: Math.min((analysis?.match_score || 0.72) + 0.15, 0.98),
-                actions: [
-                    { action_type: "add_keyword", section: "Skills", priority: "high", suggestion: "Add Kubernetes/K8s to your skills section", example: "Kubernetes, Docker, Container Orchestration" },
-                    { action_type: "add_keyword", section: "Skills", priority: "high", suggestion: "Include CI/CD tools explicitly", example: "GitHub Actions, Jenkins, CircleCI" },
-                    { action_type: "modify_bullet", section: "Experience", priority: "medium", suggestion: "Quantify your achievements with metrics", example: "Reduced deployment time by 40% through automated pipelines" },
-                    { action_type: "add_skill", section: "Skills", priority: "medium", suggestion: "Add cloud platform experience", example: "AWS (EC2, S3, Lambda), GCP, or Azure" },
-                    { action_type: "modify_bullet", section: "Experience", priority: "low", suggestion: "Highlight team leadership or mentorship", example: "Mentored 3 junior developers, leading to their promotion within 12 months" }
-                ],
-                keywords_to_add: analysis?.missing_keywords || ["Kubernetes", "CI/CD", "AWS", "Team Lead"],
-                suggested_summary: "Results-driven software engineer with 5+ years of experience building scalable applications...",
-                cover_letter_points: analysis?.cover_letter_focus || [
-                    "Lead with your strongest technical accomplishments",
-                    "Address any skill gaps proactively",
-                    "Connect your experience to their specific challenges"
-                ]
-            });
-            setActiveTab('tailor');
+            setError(err.response?.data?.detail || err.message || 'Failed to generate tailoring plan.');
         } finally {
             setLoading(false);
         }
@@ -569,8 +329,8 @@ export default function JobFitAnalyzer() {
             const data = response.data;
             alert(`Compatibility Score: ${Math.round(data.score * 100)}%\n${data.recommendation}`);
         } catch (err: any) {
-            // Fallback
-            alert(`Compatibility Score: 85%\nStrong Match (Demo)`);
+            console.error("Quick check failed:", err);
+            alert(`Quick check failed: ${err.response?.data?.detail || err.message || 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
@@ -802,22 +562,6 @@ Include:
                             </div>
                         </div>
                     </div>
-
-                    {/* Demo Mode Banner */}
-                    {isUsingDemoData && (
-                        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
-                            <div className="flex items-start">
-                                <AlertCircle className="h-5 w-5 mt-0.5 mr-3 text-amber-500" />
-                                <div>
-                                    <p className="font-medium text-amber-800">Demo Mode</p>
-                                    <p className="text-sm text-amber-700 mt-1">
-                                        Showing sample data because the backend server isn't running.
-                                        Start the backend to get real analysis of job postings.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Key Verdict Banner */}
                     {analysis.key_verdict && (
