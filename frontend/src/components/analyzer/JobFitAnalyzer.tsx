@@ -117,24 +117,6 @@ const getRiskColor = (risk: string) => {
     }
 };
 
-// Helper to get match strength styling
-const getMatchStrengthStyle = (strength: string) => {
-    switch (strength?.toLowerCase()) {
-        case 'strong':
-        case 'exceeds':
-            return { icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', label: 'Exceeds', symbol: '++' };
-        case 'match':
-            return { icon: Check, color: 'text-green-500', bg: 'bg-green-50', label: 'Match', symbol: '+' };
-        case 'partial':
-            return { icon: MinusCircle, color: 'text-yellow-500', bg: 'bg-yellow-50', label: 'Partial', symbol: '~' };
-        case 'weak':
-            return { icon: AlertTriangle, color: 'text-orange-500', bg: 'bg-orange-50', label: 'Weak', symbol: '-' };
-        case 'gap':
-            return { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', label: 'Gap', symbol: 'X' };
-        default:
-            return { icon: MinusCircle, color: 'text-gray-500', bg: 'bg-gray-50', label: 'Unknown', symbol: '?' };
-    }
-};
 
 // Process API response - only use actual API data, no demo data merging
 const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): EnhancedAnalysisResult => {
@@ -820,125 +802,287 @@ Include:
 
                     {activeTab === 'requirements' && (
                         <div className="space-y-6">
-                            {/* Summary Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                <div className="bg-green-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-600">{analysis.strong_matches || 0}</div>
-                                    <div className="text-xs text-green-700">Strong</div>
+                            {/* Summary Stats - Improved Visual */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-semibold text-gray-900">Requirements Overview</h4>
+                                    <span className="text-sm text-gray-500">{analysis.matches?.length || 0} total requirements</span>
                                 </div>
-                                <div className="bg-green-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-500">{analysis.matches_count || 0}</div>
-                                    <div className="text-xs text-green-600">Match</div>
-                                </div>
-                                <div className="bg-yellow-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-yellow-600">{analysis.partial_matches || 0}</div>
-                                    <div className="text-xs text-yellow-700">Partial</div>
-                                </div>
-                                <div className="bg-red-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-red-600">{analysis.gap_count || 0}</div>
-                                    <div className="text-xs text-red-700">Gaps</div>
-                                </div>
-                                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                                    <div className="text-2xl font-bold text-gray-600">{analysis.matches?.length || 0}</div>
-                                    <div className="text-xs text-gray-700">Total</div>
+                                <div className="grid grid-cols-5 gap-3">
+                                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-3 text-center border border-green-100">
+                                        <div className="text-2xl font-bold text-green-600">{analysis.strong_matches || 0}</div>
+                                        <div className="text-xs font-medium text-green-700">Exceeds</div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3 text-center border border-green-100">
+                                        <div className="text-2xl font-bold text-green-500">{analysis.matches_count || 0}</div>
+                                        <div className="text-xs font-medium text-green-600">Match</div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-3 text-center border border-yellow-100">
+                                        <div className="text-2xl font-bold text-yellow-600">{analysis.partial_matches || 0}</div>
+                                        <div className="text-xs font-medium text-yellow-700">Partial</div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-3 text-center border border-orange-100">
+                                        <div className="text-2xl font-bold text-orange-500">{analysis.matches?.filter(m => m.strength === 'weak').length || 0}</div>
+                                        <div className="text-xs font-medium text-orange-600">Weak</div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg p-3 text-center border border-red-100">
+                                        <div className="text-2xl font-bold text-red-600">{analysis.gap_count || 0}</div>
+                                        <div className="text-xs font-medium text-red-700">Gap</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Requirements List */}
-                            <div className="bg-white rounded-lg shadow">
-                                <div className="px-6 py-4 border-b border-gray-200">
-                                    <h4 className="font-medium text-gray-900">Requirements Breakdown</h4>
-                                    <p className="text-sm text-gray-500">Each job requirement matched against your resume</p>
-                                </div>
-                                <div className="divide-y divide-gray-100">
-                                    {analysis.matches?.length > 0 ? (
-                                        analysis.matches.map((match, index) => {
-                                            const style = getMatchStrengthStyle(match.strength);
-                                            const Icon = style.icon;
-                                            return (
-                                                <div key={index} className={`p-4 ${style.bg} border-l-4 ${match.strength === 'gap' ? 'border-red-400' : match.strength === 'strong' ? 'border-green-400' : match.strength === 'partial' ? 'border-yellow-400' : 'border-gray-300'}`}>
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-3">
-                                                                <Icon className={`w-5 h-5 ${style.color} flex-shrink-0`} />
-                                                                <span className="font-medium text-gray-900">{match.requirement_text}</span>
+                            {/* Grouped Requirements */}
+                            {analysis.matches?.length > 0 ? (
+                                <>
+                                    {/* Strong/Exceeds Matches */}
+                                    {analysis.matches.filter(m => m.strength === 'strong' || m.strength === 'exceeds').length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                            <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
+                                                <h4 className="font-semibold text-gray-900 flex items-center">
+                                                    <CheckCircle2 className="w-5 h-5 text-green-600 mr-2" />
+                                                    Strong Matches
+                                                    <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                                        {analysis.matches.filter(m => m.strength === 'strong' || m.strength === 'exceeds').length}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-sm text-green-700 mt-1">Requirements you exceed or fully meet</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {analysis.matches.filter(m => m.strength === 'strong' || m.strength === 'exceeds').map((match, index) => (
+                                                    <div key={index} className="p-4 hover:bg-green-50/50 transition-colors">
+                                                        <div className="flex items-start gap-3">
+                                                            <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-gray-900 font-medium">{match.requirement_text}</p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
+                                                                        {match.category?.toUpperCase()}
+                                                                    </span>
+                                                                    {match.evidence?.length > 0 && (
+                                                                        <span className="text-sm text-green-600">
+                                                                            ✓ {match.evidence.slice(0, 3).join(', ')}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {match.explanation && (
+                                                                    <p className="text-sm text-gray-500 mt-1">{match.explanation}</p>
+                                                                )}
                                                             </div>
-                                                            <div className="ml-8 mt-1 flex items-center gap-2">
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${match.category === 'required' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
-                                                                    {match.category?.toUpperCase() || 'REQUIREMENT'}
-                                                                </span>
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${style.bg} ${style.color}`}>
-                                                                    {style.label}
-                                                                </span>
-                                                            </div>
-                                                            {match.evidence?.length > 0 && (
-                                                                <div className="ml-8 mt-2 text-sm text-gray-600">
-                                                                    <span className="text-gray-400">Found: </span>
-                                                                    {match.evidence.join(', ')}
-                                                                </div>
-                                                            )}
-                                                            {match.explanation && (
-                                                                <div className="ml-8 mt-1 text-sm text-gray-500">
-                                                                    {match.explanation}
-                                                                </div>
-                                                            )}
-                                                            {match.suggestion && (
-                                                                <div className="ml-8 mt-2 text-sm text-indigo-600 flex items-start">
-                                                                    <Lightbulb className="w-4 h-4 mr-1 flex-shrink-0 mt-0.5" />
-                                                                    {match.suggestion}
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <div className="p-8 text-center text-gray-500">
-                                            <List className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                                            <p>No requirements parsed yet.</p>
-                                            <p className="text-sm mt-1">Run the analysis to see requirement-by-requirement breakdown.</p>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
-                                </div>
-                            </div>
 
-                            {/* Keyword Analysis */}
+                                    {/* Match */}
+                                    {analysis.matches.filter(m => m.strength === 'match').length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                            <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-teal-50 border-b border-green-100">
+                                                <h4 className="font-semibold text-gray-900 flex items-center">
+                                                    <Check className="w-5 h-5 text-green-500 mr-2" />
+                                                    Matches
+                                                    <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-600 text-xs font-bold rounded-full">
+                                                        {analysis.matches.filter(m => m.strength === 'match').length}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-sm text-green-600 mt-1">Requirements you meet</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {analysis.matches.filter(m => m.strength === 'match').map((match, index) => (
+                                                    <div key={index} className="p-4 hover:bg-green-50/30 transition-colors">
+                                                        <div className="flex items-start gap-3">
+                                                            <Check className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-gray-900">{match.requirement_text}</p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
+                                                                        {match.category?.toUpperCase()}
+                                                                    </span>
+                                                                    {match.evidence?.length > 0 && (
+                                                                        <span className="text-sm text-green-600">
+                                                                            ✓ {match.evidence.slice(0, 3).join(', ')}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Partial Matches */}
+                                    {analysis.matches.filter(m => m.strength === 'partial').length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                            <div className="px-6 py-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-100">
+                                                <h4 className="font-semibold text-gray-900 flex items-center">
+                                                    <MinusCircle className="w-5 h-5 text-yellow-500 mr-2" />
+                                                    Partial Matches
+                                                    <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
+                                                        {analysis.matches.filter(m => m.strength === 'partial').length}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-sm text-yellow-700 mt-1">Requirements you partially meet - highlight transferable skills</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {analysis.matches.filter(m => m.strength === 'partial').map((match, index) => (
+                                                    <div key={index} className="p-4 hover:bg-yellow-50/30 transition-colors">
+                                                        <div className="flex items-start gap-3">
+                                                            <MinusCircle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-gray-900">{match.requirement_text}</p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
+                                                                        {match.category?.toUpperCase()}
+                                                                    </span>
+                                                                    {match.evidence?.length > 0 && (
+                                                                        <span className="text-sm text-yellow-600">
+                                                                            ~ {match.evidence.slice(0, 3).join(', ')}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {match.suggestion && (
+                                                                    <div className="mt-2 p-2 bg-yellow-50 rounded-lg text-sm text-yellow-800 flex items-start gap-2">
+                                                                        <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                                        {match.suggestion}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Weak Matches */}
+                                    {analysis.matches.filter(m => m.strength === 'weak').length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                            <div className="px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100">
+                                                <h4 className="font-semibold text-gray-900 flex items-center">
+                                                    <AlertTriangle className="w-5 h-5 text-orange-500 mr-2" />
+                                                    Weak Matches
+                                                    <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                                                        {analysis.matches.filter(m => m.strength === 'weak').length}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-sm text-orange-700 mt-1">Areas to address in your cover letter</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {analysis.matches.filter(m => m.strength === 'weak').map((match, index) => (
+                                                    <div key={index} className="p-4 hover:bg-orange-50/30 transition-colors">
+                                                        <div className="flex items-start gap-3">
+                                                            <AlertTriangle className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-gray-900">{match.requirement_text}</p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
+                                                                        {match.category?.toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                                {match.explanation && (
+                                                                    <p className="text-sm text-gray-500 mt-1">{match.explanation}</p>
+                                                                )}
+                                                                {match.suggestion && (
+                                                                    <div className="mt-2 p-2 bg-orange-50 rounded-lg text-sm text-orange-800 flex items-start gap-2">
+                                                                        <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                                        {match.suggestion}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Gaps */}
+                                    {analysis.matches.filter(m => m.strength === 'gap').length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                            <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-rose-50 border-b border-red-100">
+                                                <h4 className="font-semibold text-gray-900 flex items-center">
+                                                    <XCircle className="w-5 h-5 text-red-500 mr-2" />
+                                                    Gaps
+                                                    <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                                                        {analysis.matches.filter(m => m.strength === 'gap').length}
+                                                    </span>
+                                                </h4>
+                                                <p className="text-sm text-red-700 mt-1">Requirements not found in your resume</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-50">
+                                                {analysis.matches.filter(m => m.strength === 'gap').map((match, index) => (
+                                                    <div key={index} className="p-4 hover:bg-red-50/30 transition-colors">
+                                                        <div className="flex items-start gap-3">
+                                                            <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-gray-900">{match.requirement_text}</p>
+                                                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
+                                                                        {match.category?.toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                                {match.suggestion && (
+                                                                    <div className="mt-2 p-2 bg-red-50 rounded-lg text-sm text-red-800 flex items-start gap-2">
+                                                                        <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                                        {match.suggestion}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                                    <List className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                                    <h4 className="text-lg font-medium text-gray-900">No Requirements Analyzed</h4>
+                                    <p className="text-gray-500 mt-1">Run the analysis to see a detailed breakdown of each requirement.</p>
+                                </div>
+                            )}
+
+                            {/* Keywords Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Matched Keywords */}
-                                <div className="bg-white rounded-lg shadow p-6">
-                                    <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
                                         <Tag className="w-5 h-5 text-green-500 mr-2" />
-                                        Matched Keywords
+                                        Keywords Found
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                        {analysis.matches?.flatMap(m => m.evidence || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 15).map((keyword, i) => (
-                                            <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <Check className="w-3 h-3 mr-1" />
+                                        {analysis.matches?.flatMap(m => m.evidence || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 20).map((keyword, i) => (
+                                            <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-100">
+                                                <Check className="w-3.5 h-3.5 mr-1.5" />
                                                 {keyword}
                                             </span>
                                         ))}
                                         {(!analysis.matches || analysis.matches.flatMap(m => m.evidence || []).length === 0) && (
-                                            <span className="text-sm text-gray-500">No matched keywords found</span>
+                                            <span className="text-sm text-gray-400">No matched keywords found</span>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Missing Keywords */}
-                                <div className="bg-white rounded-lg shadow p-6">
-                                    <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
                                         <Tag className="w-5 h-5 text-red-500 mr-2" />
-                                        Missing Keywords
+                                        Keywords to Add
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                        {analysis.missing_keywords?.slice(0, 15).map((keyword, i) => (
-                                            <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                <XCircle className="w-3 h-3 mr-1" />
+                                        {analysis.missing_keywords?.slice(0, 20).map((keyword, i) => (
+                                            <span key={i} className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-100">
+                                                <XCircle className="w-3.5 h-3.5 mr-1.5" />
                                                 {keyword}
                                             </span>
                                         ))}
                                         {(!analysis.missing_keywords || analysis.missing_keywords.length === 0) && (
-                                            <span className="text-sm text-gray-500">No missing keywords identified</span>
+                                            <span className="text-sm text-gray-400">No missing keywords identified</span>
                                         )}
                                     </div>
                                 </div>
@@ -946,14 +1090,14 @@ Include:
 
                             {/* Critical Gaps Alert */}
                             {analysis.dealbreakers?.length > 0 && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <h4 className="font-medium text-red-800 flex items-center mb-2">
+                                <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                                    <h4 className="font-semibold text-red-800 flex items-center mb-3">
                                         <AlertTriangle className="w-5 h-5 mr-2" />
-                                        Critical Gaps (Potential Dealbreakers)
+                                        Potential Dealbreakers
                                     </h4>
-                                    <ul className="space-y-1">
+                                    <ul className="space-y-2">
                                         {analysis.dealbreakers.map((gap, i) => (
-                                            <li key={i} className="text-sm text-red-700 flex items-start">
+                                            <li key={i} className="text-sm text-red-700 flex items-start bg-white/50 p-3 rounded-lg">
                                                 <XCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                                                 {gap}
                                             </li>

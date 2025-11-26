@@ -156,14 +156,21 @@ class JobPostingParser:
     def _categorize_requirement(self, text: str) -> RequirementCategory:
         """Categorize a requirement."""
         text_lower = text.lower()
-        
+
         # Check for logistics FIRST (most specific)
         logistics_indicators = ["location", "remote", "hybrid", "travel", "clearance",
                                "onsite", "relocate", "visa", "authorization", "must be located",
                                "willing to travel"]
         if any(w in text_lower for w in logistics_indicators):
             return RequirementCategory.LOGISTICS
-        
+
+        # Check for explicit experience mentions BEFORE education
+        # This prevents "X experience" from being miscategorized as EDUCATION
+        experience_explicit = ["years of experience", "years experience", "experience in",
+                               "experience with", "experience including", "track record"]
+        if any(phrase in text_lower for phrase in experience_explicit):
+            return RequirementCategory.EXPERIENCE
+
         # Check for education (specific keywords) - be careful with false positives!
         # "master" can mean "Master's degree" OR "master complex products" (verb)
         # Only match education when context is clear
@@ -332,6 +339,20 @@ class JobPostingParser:
                 if not any(sig in line_lower for sig in ["experience with", "knowledge of", "proficiency", "familiar with", "skilled in"]):
                     return None
 
+        # Also check for responsibility patterns that appear mid-sentence
+        # e.g., "serving as voice of the customer", "working together to build"
+        responsibility_patterns = [
+            r"serving as",
+            r"voice of the customer",
+            r"influence (roadmap|product|direction)",
+            r"ensure .+ builds",
+            r"drives? (transformative|business|customer)",
+        ]
+        responsibility_hits = sum(1 for p in responsibility_patterns if re.search(p, line_lower))
+        # If multiple responsibility patterns found and no strong requirement signals, skip
+        if responsibility_hits >= 2 and not has_requirement_signal:
+            return None
+
         # Skip lines that are just locations (city, state patterns)
         location_pattern = r'^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2}(?:;\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})*$'
         if re.match(location_pattern, cleaned_line):
@@ -364,23 +385,30 @@ class JobPostingParser:
             return None
 
         # Skip company mission statements and general descriptions
+        # Use IGNORECASE for patterns that need to match capitalized words
         non_requirement_patterns = [
-            r"^our (mission|team|company|vision|goal)",
-            r"^we (are|want|believe|build|create|strive)",
-            r"^(this is|you will be|you'll be) (a|an|the)",
-            r"^as (a|an|the) .+, you will",
-            r"committed to|passionate about|excited about",
-            r"equal opportunity|diversity|inclusive",
-            # Company name + mission patterns (Anthropic's mission, Google's mission, etc.)
-            r"^[a-z]+[''']s mission",
-            r"mission is to",
-            r"^at [a-z]+,? we",  # "At Anthropic, we..."
-            r"^join (us|our team|the team)",
-            r"growing group of|growing team of",
-            r"working together to",
+            (r"^our (mission|team|company|vision|goal)", False),
+            (r"^we (are|want|believe|build|create|strive)", False),
+            (r"^(this is|you will be|you'll be) (a|an|the)", False),
+            (r"^as (a|an|the) .+, you will", False),
+            (r"committed to|passionate about|excited about", False),
+            (r"equal opportunity|diversity|inclusive", False),
+            # Company name + mission patterns - use original line for case-sensitive company names
+            (r"^[A-Za-z]+[''']s mission", True),  # "Anthropic's mission", "Google's mission"
+            (r"mission is to", False),
+            (r"^at [a-z]+,? we", False),  # "At Anthropic, we..."
+            (r"^join (us|our team|the team)", False),
+            (r"growing group of|growing team of", False),
+            (r"working together to", False),
+            # Additional company description patterns
+            (r"(safe|beneficial|reliable).*(ai|users|society)", False),
+            (r"researchers.*engineers.*leaders", False),
+            (r"build.*(beneficial|steerable|interpretable)", False),
         ]
-        for pattern in non_requirement_patterns:
-            if re.search(pattern, line_lower):
+        for pattern, use_original in non_requirement_patterns:
+            text_to_check = cleaned_line if use_original else line_lower
+            flags = 0 if use_original else re.IGNORECASE
+            if re.search(pattern, text_to_check, flags):
                 # Allow if it still has requirement signals
                 if not has_requirement_signal:
                     return None
