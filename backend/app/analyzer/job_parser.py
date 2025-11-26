@@ -95,12 +95,26 @@ class JobPostingParser:
     
     # Common technical keywords
     TECH_KEYWORDS = [
-        "python", "javascript", "typescript", "java", "sql", "react",
-        "fastapi", "flask", "django", "aws", "azure", "gcp", "docker",
-        "kubernetes", "api", "rest", "graphql", "postgresql", "mongodb",
-        "llm", "ai", "ml", "machine learning", "data", "analytics",
-        "node", "vue", "angular", "redis", "celery", "ci/cd", "git",
-        "microservices", "terraform", "jenkins"
+        # Languages
+        "python", "javascript", "typescript", "java", "sql", "go", "rust", "c++", "ruby",
+        # Web frameworks
+        "react", "fastapi", "flask", "django", "node", "vue", "angular", "nextjs",
+        # Cloud & infrastructure
+        "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "jenkins",
+        # Databases
+        "postgresql", "mongodb", "mysql", "redis", "elasticsearch",
+        # APIs & protocols
+        "api", "rest", "graphql", "sdk", "webhook", "oauth",
+        # AI/ML
+        "llm", "ai", "ml", "machine learning", "deep learning", "nlp", "neural network",
+        "gpt", "claude", "openai", "anthropic", "langchain", "embeddings",
+        # Data
+        "data", "analytics", "etl", "pipeline", "snowflake", "databricks",
+        # DevOps
+        "ci/cd", "git", "github", "gitlab", "microservices", "celery",
+        # General tech
+        "saas", "b2b", "software", "technical", "engineering", "developer",
+        "integration", "implementation", "architecture"
     ]
     
     def __init__(self, llm_provider=None):
@@ -150,13 +164,20 @@ class JobPostingParser:
         if any(w in text_lower for w in logistics_indicators):
             return RequirementCategory.LOGISTICS
         
-        # Check for education (specific keywords)
-        edu_indicators = ["degree", "bachelor", "master", "phd", "certification",
-                         "certified", "university", "college", "bs ", "ms ",
-                         "ba ", "ma ", "b.s.", "m.s.", "b.a.", "m.a."]
-        if any(w in text_lower for w in edu_indicators):
-            # Avoid false positives from "development" containing "lopment"
-            # Make sure it's actually about education
+        # Check for education (specific keywords) - be careful with false positives!
+        # "master" can mean "Master's degree" OR "master complex products" (verb)
+        # Only match education when context is clear
+        edu_exact_phrases = [
+            "degree", "bachelor", "phd", "ph.d", "doctorate",
+            "certification", "certified",
+            "university", "college",
+            "bs ", "ms ", "ba ", "ma ",
+            "b.s.", "m.s.", "b.a.", "m.a.",
+            "master's", "masters degree", "master degree",
+            "graduate degree", "undergraduate",
+            "educational background", "academic"
+        ]
+        if any(phrase in text_lower for phrase in edu_exact_phrases):
             return RequirementCategory.EDUCATION
         
         # Check for technical skills (before general experience check)
@@ -243,9 +264,38 @@ class JobPostingParser:
             "you'll",
             "in this role",
             "as a",
+            "strong candidates may have",
+            "strong candidates will have",
+            "ideal candidates",
+            "we're looking for",
+            "we are looking for",
         ]
         if any(line_lower.startswith(header) for header in intro_headers):
             return None
+
+        # Skip salary, deadline, and other metadata (not requirements)
+        metadata_patterns = [
+            r"^annual salary",
+            r"^\$[\d,]+",  # Lines starting with dollar amounts
+            r"^salary",
+            r"^compensation",
+            r"^deadline to apply",
+            r"^application deadline",
+            r"^applications will be reviewed",
+            r"^apply by",
+            r"^posted",
+            r"^job id",
+            r"^requisition",
+            r"^employment type",
+            r"^job type",
+            r"^work location",
+            r"^reports to",
+            r"^department",
+            r"^team size",
+        ]
+        for pattern in metadata_patterns:
+            if re.search(pattern, line_lower):
+                return None
 
         # Skip job titles (short capitalized lines with role keywords)
         job_title_keywords = [
@@ -318,6 +368,13 @@ class JobPostingParser:
             r"^as (a|an|the) .+, you will",
             r"committed to|passionate about|excited about",
             r"equal opportunity|diversity|inclusive",
+            # Company name + mission patterns (Anthropic's mission, Google's mission, etc.)
+            r"^[a-z]+[''']s mission",
+            r"mission is to",
+            r"^at [a-z]+,? we",  # "At Anthropic, we..."
+            r"^join (us|our team|the team)",
+            r"growing group of|growing team of",
+            r"working together to",
         ]
         for pattern in non_requirement_patterns:
             if re.search(pattern, line_lower):
