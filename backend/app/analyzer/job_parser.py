@@ -250,7 +250,9 @@ class JobPostingParser:
             "who you are", "what we're looking for", "nice to have", "benefits",
             "perks", "compensation", "salary", "location", "the role", "the team",
             "your impact", "job description", "overview", "summary", "apply now",
-            "how to apply", "equal opportunity", "diversity", "inclusion"
+            "how to apply", "equal opportunity", "diversity", "inclusion",
+            "how we're different", "why join us", "why work here", "our culture",
+            "what we offer", "what's in it for you", "our values", "our mission"
         ]
         if any(line_lower == header or line_lower.startswith(header + ":") for header in section_headers):
             return None
@@ -284,6 +286,9 @@ class JobPostingParser:
         metadata_patterns = [
             r"^annual salary",
             r"^\$[\d,]+",  # Lines starting with dollar amounts
+            r"^£[\d,]+",   # Lines starting with pound amounts
+            r"^€[\d,]+",   # Lines starting with euro amounts
+            r"[\$£€][\d,]+\s*-\s*[\$£€]?[\d,]+",  # Salary ranges like "$100,000 - $150,000" or "£185,000 - £185,000"
             r"^salary",
             r"^compensation",
             r"^deadline to apply",
