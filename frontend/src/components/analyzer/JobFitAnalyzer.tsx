@@ -342,37 +342,64 @@ const getDemoAnalysisData = (): EnhancedAnalysisResult => ({
     missing_keywords: ["Kubernetes", "K8s", "AWS", "CI/CD", "Jenkins", "Team Lead", "Terraform"]
 });
 
-// Merge API response with demo data to ensure all fields are populated
-const enrichAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): EnhancedAnalysisResult => {
-    const demoData = getDemoAnalysisData();
+// Process API response - only use actual API data, no demo data merging
+const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): EnhancedAnalysisResult => {
     return {
-        ...demoData,
-        ...apiData,
-        // Ensure arrays are populated - use API data if non-empty, otherwise use demo
-        gaps: (apiData.gaps && apiData.gaps.length > 0) ? apiData.gaps : demoData.gaps,
-        strengths: (apiData.strengths && apiData.strengths.length > 0) ? apiData.strengths : demoData.strengths,
-        matches: (apiData.matches && apiData.matches.length > 0) ? apiData.matches : demoData.matches,
-        cover_letter_focus: (apiData.cover_letter_focus && apiData.cover_letter_focus.length > 0) ? apiData.cover_letter_focus : demoData.cover_letter_focus,
-        interview_prep: (apiData.interview_prep && apiData.interview_prep.length > 0) ? apiData.interview_prep : demoData.interview_prep,
-        questions_to_ask: (apiData.questions_to_ask && apiData.questions_to_ask.length > 0) ? apiData.questions_to_ask : demoData.questions_to_ask,
-        rejection_reasons: (apiData.rejection_reasons && apiData.rejection_reasons.length > 0) ? apiData.rejection_reasons : demoData.rejection_reasons,
-        mitigation_strategies: (apiData.mitigation_strategies && apiData.mitigation_strategies.length > 0) ? apiData.mitigation_strategies : demoData.mitigation_strategies,
-        differentiators: (apiData.differentiators && apiData.differentiators.length > 0) ? apiData.differentiators : demoData.differentiators,
-        top_suggestions: (apiData.top_suggestions && apiData.top_suggestions.length > 0) ? apiData.top_suggestions : demoData.top_suggestions,
-        missing_keywords: (apiData.missing_keywords && apiData.missing_keywords.length > 0) ? apiData.missing_keywords : demoData.missing_keywords,
-        // Ensure category scores are populated
-        category_scores: (apiData.category_scores && Object.keys(apiData.category_scores).length > 0) ? apiData.category_scores : demoData.category_scores,
-        // Ensure counts are set correctly based on matches
-        strong_matches: apiData.strong_matches || (apiData.matches?.filter(m => m.strength === 'strong').length) || demoData.strong_matches,
-        matches_count: apiData.matches_count || (apiData.matches?.filter(m => m.strength === 'match').length) || demoData.matches_count,
-        partial_matches: apiData.partial_matches || (apiData.matches?.filter(m => m.strength === 'partial').length) || demoData.partial_matches,
-        gap_count: apiData.gap_count || (apiData.matches?.filter(m => m.strength === 'gap').length) || demoData.gap_count,
+        // Job info
+        job_title: apiData.job_title || 'Unknown Position',
+        company: apiData.company || 'Unknown Company',
+        location: apiData.location || '',
+
+        // Core scoring
+        overall_score: apiData.overall_score || 0,
+        confidence_score: apiData.confidence_score || 0,
+        fit_tier: apiData.fit_tier || 'Unknown',
+
+        // Executive summary
+        executive_summary: apiData.executive_summary || '',
+        key_verdict: apiData.key_verdict || '',
+
+        // Arrays - use API data as-is (empty if not provided)
+        gaps: apiData.gaps || [],
+        strengths: apiData.strengths || [],
+        matches: apiData.matches || [],
+        cover_letter_focus: apiData.cover_letter_focus || [],
+        interview_prep: apiData.interview_prep || [],
+        questions_to_ask: apiData.questions_to_ask || [],
+        rejection_reasons: apiData.rejection_reasons || [],
+        mitigation_strategies: apiData.mitigation_strategies || [],
+        differentiators: apiData.differentiators || [],
+        top_suggestions: apiData.top_suggestions || [],
+        missing_keywords: apiData.missing_keywords || [],
+        dealbreakers: apiData.dealbreakers || [],
+
+        // Category scores
+        category_scores: apiData.category_scores || {},
+
+        // Counts - calculate from matches if not provided
+        strong_matches: apiData.strong_matches ?? (apiData.matches?.filter(m => m.strength === 'strong' || m.strength === 'exceeds').length || 0),
+        matches_count: apiData.matches_count ?? (apiData.matches?.filter(m => m.strength === 'match').length || 0),
+        partial_matches: apiData.partial_matches ?? (apiData.matches?.filter(m => m.strength === 'partial').length || 0),
+        gap_count: apiData.gap_count ?? (apiData.gaps?.length || apiData.matches?.filter(m => m.strength === 'gap').length || 0),
+
+        // Strategy
+        application_strategy: apiData.application_strategy || '',
+        competitive_position: apiData.competitive_position || '',
+        rejection_risk: apiData.rejection_risk || 'Unknown',
+
+        // Backward compatibility
+        match_score: apiData.match_score || apiData.overall_score || 0,
+        match_label: apiData.match_label || apiData.fit_tier || 'Unknown',
+        should_apply: apiData.should_apply ?? (apiData.overall_score ? apiData.overall_score >= 0.5 : false),
+        recommendation: apiData.recommendation || apiData.executive_summary || '',
     };
 };
 
 export default function JobFitAnalyzer() {
     const [activeTab, setActiveTab] = useState<'analyze' | 'requirements' | 'tailor' | 'gaps' | 'strategy'>('analyze');
+    const [inputMode, setInputMode] = useState<'url' | 'paste'>('url');
     const [jobUrl, setJobUrl] = useState('');
+    const [jobDescription, setJobDescription] = useState('');
     const [resumeFile, setResumeFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -409,8 +436,14 @@ export default function JobFitAnalyzer() {
 
     const handleAnalyze = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!jobUrl) {
+
+        // Validate based on input mode
+        if (inputMode === 'url' && !jobUrl) {
             setError("Please enter a job URL");
+            return;
+        }
+        if (inputMode === 'paste' && !jobDescription.trim()) {
+            setError("Please paste the job description");
             return;
         }
         if (!resumeFile) {
@@ -429,14 +462,24 @@ export default function JobFitAnalyzer() {
                 ? '/api/analyzer/analyze-enhanced'
                 : '/api/analyzer/analyze';
 
-            const response = await apiClient.post(endpoint, {
-                job_url: jobUrl,
+            // Build request based on input mode
+            const requestData: Record<string, any> = {
                 resume_data: mockResumeData,
                 use_llm: useEnhancedAnalysis
-            });
+            };
 
-            // Enrich API response with demo defaults for any missing fields
-            setAnalysis(enrichAnalysisData(response.data));
+            if (inputMode === 'url') {
+                requestData.job_url = jobUrl;
+            } else {
+                // Paste mode - send job description directly
+                requestData.job_description = jobDescription;
+                requestData.job_url = ''; // Empty URL since we're using pasted description
+            }
+
+            const response = await apiClient.post(endpoint, requestData);
+
+            // Process API response (no demo data merging)
+            setAnalysis(processAnalysisData(response.data));
             setIsUsingDemoData(false); // Real API data
             setLoading(false);
         } catch (err: any) {
@@ -555,24 +598,77 @@ export default function JobFitAnalyzer() {
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Full Analysis</h3>
                 <form onSubmit={handleAnalyze} className="space-y-4">
-                    {/* Job URL Input */}
+                    {/* Input Mode Toggle */}
                     <div>
-                        <label htmlFor="job-url" className="block text-sm font-medium text-gray-700 mb-1">Job Posting URL</label>
-                        <div className="relative rounded-md shadow-sm">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="url"
-                                name="job-url"
-                                id="job-url"
-                                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
-                                placeholder="Paste job posting URL (Greenhouse, Lever, etc.)"
-                                value={jobUrl}
-                                onChange={(e) => setJobUrl(e.target.value)}
-                                required
-                            />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Job Posting</label>
+                        <div className="flex rounded-lg bg-gray-100 p-1 mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setInputMode('url')}
+                                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                                    inputMode === 'url'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                <Search className="w-4 h-4 inline mr-1.5" />
+                                From URL
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setInputMode('paste')}
+                                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                                    inputMode === 'paste'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                            >
+                                <FileText className="w-4 h-4 inline mr-1.5" />
+                                Paste Description
+                            </button>
                         </div>
+
+                        {/* URL Input */}
+                        {inputMode === 'url' && (
+                            <div className="relative rounded-md shadow-sm">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="h-5 w-5 text-gray-400" />
+                                </div>
+                                <input
+                                    type="url"
+                                    name="job-url"
+                                    id="job-url"
+                                    className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2"
+                                    placeholder="Paste job posting URL (Greenhouse, Lever, etc.)"
+                                    value={jobUrl}
+                                    onChange={(e) => setJobUrl(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {/* Paste Description */}
+                        {inputMode === 'paste' && (
+                            <div>
+                                <textarea
+                                    name="job-description"
+                                    id="job-description"
+                                    rows={8}
+                                    className="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                    placeholder="Paste the full job description here...
+
+Include:
+• Job title and company name
+• Requirements and qualifications
+• Responsibilities
+• Nice-to-haves"
+                                    value={jobDescription}
+                                    onChange={(e) => setJobDescription(e.target.value)}
+                                />
+                                <p className="mt-1.5 text-xs text-gray-500">
+                                    Tip: Paste the complete job description for the most accurate analysis. This also saves on API costs.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Resume Upload */}

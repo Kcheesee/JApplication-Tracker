@@ -139,36 +139,82 @@ async def analyze_job_fit_enhanced(
     try:
         settings = get_settings()
 
-        # Fetch job HTML if not provided
-        job_html = request.job_html
+        # Determine input mode: pasted description vs URL
         job_description_text = request.job_description or ""
+        job_html = request.job_html
+        job_url = request.job_url or ""
 
-        if not job_html:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(request.job_url, follow_redirects=True)
-                job_html = response.text
-                # Extract text for LLM if not provided
-                if not job_description_text:
-                    soup = BeautifulSoup(job_html, 'html.parser')
-                    job_description_text = soup.get_text(separator=' ', strip=True)[:5000]
+        # If job description is provided directly, use it (no URL fetch needed)
+        if job_description_text and not job_html:
+            # Parse requirements from raw text
+            parser = JobPostingParser()
 
-        # Parse job posting
-        parser = JobPostingParser()
-        if "greenhouse" in request.job_url.lower():
-            raw_data = parser._parse_greenhouse(job_html)
+            # Extract job info from pasted description
+            # Try to find title, company, location from the text
+            lines = job_description_text.strip().split('\n')
+            title = "Unknown Position"
+            company = "Unknown Company"
+            location = "Unknown"
+
+            # Simple heuristic: first non-empty line might be title
+            for line in lines[:5]:
+                line = line.strip()
+                if line and len(line) < 100:
+                    if title == "Unknown Position":
+                        title = line
+                    elif company == "Unknown Company" and not any(kw in line.lower() for kw in ['requirement', 'qualification', 'experience', 'skill']):
+                        company = line
+                    break
+
+            # Build raw_data for requirement extraction
+            raw_data = {
+                "title": title,
+                "company": company,
+                "location": location,
+                "qualifications": job_description_text.split('\n'),
+                "description": job_description_text,
+                "confidence": 0.7
+            }
+
+            requirements = parser._extract_requirements(raw_data)
+
+            from ..analyzer.job_parser import ParsedJobPosting
+            job = ParsedJobPosting(
+                url=job_url,
+                title=title,
+                company=company,
+                location=location,
+                requirements=requirements
+            )
+
         else:
-            raw_data = parser._parse_generic(job_html)
+            # URL mode: Fetch job HTML if not provided
+            if not job_html and job_url:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(job_url, follow_redirects=True)
+                    job_html = response.text
+                    # Extract text for LLM if not provided
+                    if not job_description_text:
+                        soup = BeautifulSoup(job_html, 'html.parser')
+                        job_description_text = soup.get_text(separator=' ', strip=True)[:5000]
 
-        requirements = parser._extract_requirements(raw_data)
+            # Parse job posting from HTML
+            parser = JobPostingParser()
+            if job_url and "greenhouse" in job_url.lower():
+                raw_data = parser._parse_greenhouse(job_html)
+            else:
+                raw_data = parser._parse_generic(job_html)
 
-        from ..analyzer.job_parser import ParsedJobPosting
-        job = ParsedJobPosting(
-            url=request.job_url,
-            title=raw_data.get("title", "Unknown"),
-            company=raw_data.get("company", "Unknown"),
-            location=raw_data.get("location", "Unknown"),
-            requirements=requirements
-        )
+            requirements = parser._extract_requirements(raw_data)
+
+            from ..analyzer.job_parser import ParsedJobPosting
+            job = ParsedJobPosting(
+                url=job_url,
+                title=raw_data.get("title", "Unknown"),
+                company=raw_data.get("company", "Unknown"),
+                location=raw_data.get("location", "Unknown"),
+                requirements=requirements
+            )
 
         # Convert resume data
         resume = ResumeData(**request.resume_data.model_dump())

@@ -150,9 +150,9 @@ class StrengthHighlightResponse(BaseModel):
 
 class EnhancedAnalyzeRequest(BaseModel):
     """Request for enhanced LLM-powered analysis."""
-    job_url: str
-    job_html: Optional[str] = None
-    job_description: Optional[str] = None  # Raw job description text
+    job_url: Optional[str] = None  # URL to fetch job posting from
+    job_html: Optional[str] = None  # Pre-fetched HTML content
+    job_description: Optional[str] = None  # Raw job description text (use instead of URL)
     resume_data: ResumeDataInput
     use_llm: bool = True  # Whether to use LLM for deep analysis
 
