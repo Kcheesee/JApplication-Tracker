@@ -244,15 +244,18 @@ class ResumeMatcher:
         
         matched_keywords = []
         for kw in req.keywords:
-            if kw.lower() in resume_skills_lower:
+            # Check if keyword is contained WITHIN any skill (substring match)
+            if any(kw.lower() in skill for skill in resume_skills_lower):
                 matched_keywords.append(kw)
         
-        # Also check experience bullets and projects
-        all_text = " ".join([
+        # Also check summary, experience bullets, and projects
+        all_text = (resume.summary or "").lower() + " "
+
+        all_text += " ".join([
             " ".join(exp.get("bullets", []))
             for exp in resume.experiences
         ]).lower()
-        
+
         all_text += " ".join([
             p.get("description", "") + " ".join(p.get("technologies", []))
             for p in resume.projects
