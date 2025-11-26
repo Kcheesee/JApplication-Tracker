@@ -354,11 +354,6 @@ export default function JobFitAnalyzer() {
                 </div>
             </div>
 
-            {/* Quick Check Section */}
-            {!analysis && (
-                <QuickCheck onCheck={handleQuickCheck} loading={loading} />
-            )}
-
             {/* Main Analysis Form */}
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Full Analysis</h3>
@@ -518,6 +513,11 @@ Include:
                     </div>
                 )}
             </div>
+
+            {/* Quick Check Section */}
+            {!analysis && (
+                <QuickCheck onCheck={handleQuickCheck} loading={loading} />
+            )}
 
             {/* Results Section */}
             {analysis && (
