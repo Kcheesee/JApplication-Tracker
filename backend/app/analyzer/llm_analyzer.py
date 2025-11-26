@@ -319,7 +319,13 @@ Be specific, honest, and actionable. Don't sugarcoat gaps but always provide con
         job: ParsedJobPosting,
         raw_description: str
     ) -> str:
-        """Format job posting for LLM prompt."""
+        """Format job posting for LLM prompt.
+
+        NOTE: We intentionally DO NOT include the raw description because it
+        contains noise (mission statements, salary info, responsibilities)
+        that the LLM would incorrectly treat as requirements. We only show
+        the pre-filtered requirements from the parser.
+        """
         sections = []
 
         sections.append(f"Title: {job.title}")
@@ -327,13 +333,17 @@ Be specific, honest, and actionable. Don't sugarcoat gaps but always provide con
         sections.append(f"Location: {job.location}")
 
         if job.requirements:
-            sections.append("\nRequirements:")
+            sections.append("\nJob Requirements (analyze the candidate against ONLY these):")
             for req in job.requirements:
                 req_type = req.requirement_type.value if hasattr(req.requirement_type, 'value') else req.requirement_type
-                sections.append(f"  - [{req_type.upper()}] {req.text}")
+                category = req.category.value if hasattr(req.category, 'value') else req.category
+                sections.append(f"  - [{req_type.upper()}] [{category}] {req.text}")
+        else:
+            sections.append("\nNo specific requirements extracted - use general job fit assessment.")
 
-        if raw_description:
-            sections.append(f"\nFull Description:\n{raw_description[:3000]}")
+        # Add note to guide the LLM
+        sections.append("\nIMPORTANT: Only evaluate the candidate against the requirements listed above.")
+        sections.append("Do NOT invent additional requirements from company descriptions, mission statements, or job responsibilities.")
 
         return "\n".join(sections)
 

@@ -319,7 +319,10 @@ class JobPostingParser:
             "analyze", "assess", "evaluate", "prepare", "present", "report",
             "communicate", "partner", "work with", "engage", "serve as",
             "act as", "be responsible", "take ownership", "help", "contribute",
-            "identify", "track", "measure", "optimize", "improve", "streamline"
+            "identify", "track", "measure", "optimize", "improve", "streamline",
+            # Additional responsibility verbs found in job postings
+            "channel", "advocate", "champion", "influence", "shape", "translate",
+            "navigate", "launch", "scale", "accelerate", "spearhead", "orchestrate"
         ]
         # Check if line starts with an action verb (responsibility pattern)
         for verb in responsibility_verbs:
