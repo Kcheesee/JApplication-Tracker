@@ -1,6 +1,6 @@
-# 🚀 Job Application Tracker v2.0
+# 🚀 Job Application Tracker v2.1
 
-> A powerful, AI-powered job application tracker with Gmail sync, Google Sign In, and beautiful analytics to help you land your dream job faster.
+> A powerful, AI-powered job application tracker with Gmail sync, Google Sign In, Job Fit Analyzer, and beautiful analytics to help you land your dream job faster.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
@@ -37,12 +37,36 @@ Track every application, never miss a follow-up, and get hired faster with AI-po
 - **Interview Prep**: Store questions, notes, and company research
 - **Network Contacts**: Track referrals and recruiter relationships
 
-### 🎯 **Job Fit Analyzer**
-- **AI Matching**: Instantly score your resume against any job description
-- **Gap Analysis**: Identify missing skills and keywords
-- **Tailoring Plans**: Get specific, actionable advice to improve your match score
-- **Resume Upload**: Drag-and-drop resume analysis
-- **Quick Check**: Fast compatibility assessment for any role
+### 🎯 **Job Fit Analyzer** (Enhanced in v2.1)
+Deep AI-powered resume-to-job matching with comprehensive analysis:
+
+**Resume Parsing:**
+- **PDF Upload**: Drag-and-drop PDF resume with LLM-powered extraction
+- **Structured Data**: Extracts skills, experience, education, projects, and certifications
+- **Smart Caching**: Parse once, analyze multiple jobs without re-uploading
+
+**Analysis Engine:**
+- **Multi-Provider LLM**: Powered by Claude AI (with OpenAI/Gemini support)
+- **Smart Requirement Parsing**: Filters out company descriptions, salary info, and responsibilities to focus on actual requirements
+- **5-Level Match Scoring**: Exceeds → Match → Partial → Weak → Gap
+- **Category Breakdown**: Technical skills, experience, education, soft skills, logistics
+
+**Deep Insights:**
+- **Gap Analysis**: Severity-ranked gaps with bridging strategies and time-to-close estimates
+- **Strength Highlights**: Your competitive advantages for this specific role
+- **Risk Assessment**: Potential rejection reasons with mitigation strategies
+- **Competitive Position**: How you stack up against typical applicants
+
+**Strategic Guidance:**
+- **Application Strategy**: Personalized go/no-go recommendation
+- **Cover Letter Focus**: Key themes to emphasize
+- **Interview Prep**: Topics to study and talking points to prepare
+- **Questions to Ask**: Thoughtful questions for your interviewer
+
+**Input Flexibility:**
+- **URL Input**: Paste job URLs from Greenhouse, Lever, Workday, etc.
+- **Paste Mode**: Copy/paste job descriptions directly
+- **Quick Check**: Fast compatibility scan before full analysis
 
 ### 📱 **Modern, Responsive UI**
 - **Beautiful Design**: Built with shadcn/ui and Tailwind CSS
@@ -369,9 +393,26 @@ rm -rf __pycache__
 pip install -r requirements.txt --force-reinstall
 ```
 
-## 📝 What's New in v2.0
+## 📝 What's New in v2.1
 
-### Major Features
+### Job Fit Analyzer Enhancements
+✅ **PDF Resume Parsing**: Upload PDFs with LLM-powered extraction via Claude AI
+✅ **Enhanced Analysis UI**: Grouped requirements by match strength with visual indicators
+✅ **Smart Parser Filtering**: Removes company descriptions, salary info, mission statements
+✅ **Multi-Currency Support**: Handles USD, GBP, EUR salary filtering
+✅ **Category Breakdown**: Visual score bars for technical, experience, education, etc.
+✅ **Risk Assessment Panel**: Rejection risks with mitigation strategies
+✅ **Strength Highlights**: Your competitive advantages for each role
+✅ **Strategic Guidance**: Cover letter focus, interview prep, questions to ask
+
+### UI/UX Improvements
+✅ **Reordered Navigation**: Analyzer tab now before Settings for easier access
+✅ **Page Layout**: Full Analysis form at top, Quick Check below
+✅ **Improved Requirements View**: Color-coded groups (Exceeds/Match/Partial/Weak/Gap)
+✅ **Job Info Header**: Shows position, company, location with match score
+✅ **Keywords Section**: Found keywords vs missing keywords at a glance
+
+### v2.0 Features (Previous Release)
 ✅ Multi-user authentication with JWT
 ✅ Google Sign In integration
 ✅ Gmail sync with AI parsing
@@ -381,34 +422,26 @@ pip install -r requirements.txt --force-reinstall
 ✅ Enhanced dashboard analytics
 ✅ Duplicate detection
 ✅ Data export (CSV, JSON, PDF)
-✅ **Job Fit Analyzer** (New!)
-
-### Improvements
-✅ Better error handling in Gmail sync
-✅ Batch commits to prevent data loss
-✅ Smart email pre-filtering
-✅ URL validation for job links
-✅ OAuth scope fixes
-✅ Single-click Google Sign In
 
 ## 🗺️ Roadmap
 
-### Coming Soon (v2.1)
+### Coming Soon (v2.2)
 - [ ] Dark mode
 - [ ] Email templates with smart variables
 - [ ] Calendar integration (Google Calendar, Outlook)
 - [ ] Salary comparison charts
 - [ ] Application streak tracking
-- [ ] Customizable dashboard widgets
+- [ ] Resume tailoring suggestions export
 
 ### Future (v3.0)
 - [ ] Mobile app (React Native)
-- [ ] AI resume optimization
-- [ ] Interview scheduler
-- [ ] Browser extension
+- [ ] AI-powered resume rewriter
+- [ ] Interview scheduler with calendar sync
+- [ ] Browser extension for one-click job saving
 - [ ] Slack/Discord notifications
 - [ ] Team collaboration features
-- [ ] ATS keyword scanner
+- [ ] ATS keyword optimization
+- [ ] Cover letter generator
 
 ## 🤝 Contributing
 
