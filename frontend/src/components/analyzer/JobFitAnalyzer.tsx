@@ -120,6 +120,40 @@ const getRiskColor = (risk: string) => {
 
 // Process API response - only use actual API data, no demo data merging
 const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): EnhancedAnalysisResult => {
+    const gaps = apiData.gaps || [];
+    const strengths = apiData.strengths || [];
+
+    // Synthesize matches array from gaps and strengths if not provided
+    // This ensures the Requirements tab has data to display from LLM analysis
+    let matches = apiData.matches || [];
+    if (matches.length === 0 && (gaps.length > 0 || strengths.length > 0)) {
+        const synthesizedMatches: any[] = [];
+
+        // Convert strengths to strong matches
+        strengths.forEach((s: any, idx: number) => {
+            synthesizedMatches.push({
+                requirement: s.title || s.description || `Strength ${idx + 1}`,
+                strength: 'strong',
+                explanation: s.description || s.competitive_advantage || '',
+                category: s.category || 'general',
+                evidence: s.evidence || [],
+            });
+        });
+
+        // Convert gaps to gap matches
+        gaps.forEach((g: any, idx: number) => {
+            synthesizedMatches.push({
+                requirement: g.requirement_text || g.gap_description || `Gap ${idx + 1}`,
+                strength: 'gap',
+                explanation: g.gap_description || g.impact_on_application || '',
+                category: g.category || 'general',
+                severity: g.severity,
+            });
+        });
+
+        matches = synthesizedMatches;
+    }
+
     return {
         // Job info
         job_title: apiData.job_title || 'Unknown Position',
@@ -136,9 +170,9 @@ const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): Enhanced
         key_verdict: apiData.key_verdict || '',
 
         // Arrays - use API data as-is (empty if not provided)
-        gaps: apiData.gaps || [],
-        strengths: apiData.strengths || [],
-        matches: apiData.matches || [],
+        gaps: gaps,
+        strengths: strengths,
+        matches: matches,
         cover_letter_focus: apiData.cover_letter_focus || [],
         interview_prep: apiData.interview_prep || [],
         questions_to_ask: apiData.questions_to_ask || [],
@@ -152,11 +186,11 @@ const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): Enhanced
         // Category scores
         category_scores: apiData.category_scores || {},
 
-        // Counts - calculate from matches if not provided
-        strong_matches: apiData.strong_matches ?? (apiData.matches?.filter(m => m.strength === 'strong' || m.strength === 'exceeds').length || 0),
-        matches_count: apiData.matches_count ?? (apiData.matches?.filter(m => m.strength === 'match').length || 0),
-        partial_matches: apiData.partial_matches ?? (apiData.matches?.filter(m => m.strength === 'partial').length || 0),
-        gap_count: apiData.gap_count ?? (apiData.gaps?.length || apiData.matches?.filter(m => m.strength === 'gap').length || 0),
+        // Counts - calculate from synthesized matches
+        strong_matches: apiData.strong_matches ?? matches.filter(m => m.strength === 'strong' || m.strength === 'exceeds').length,
+        matches_count: apiData.matches_count ?? matches.filter(m => m.strength === 'match').length,
+        partial_matches: apiData.partial_matches ?? matches.filter(m => m.strength === 'partial').length,
+        gap_count: apiData.gap_count ?? (gaps.length || matches.filter(m => m.strength === 'gap').length),
 
         // Strategy
         application_strategy: apiData.application_strategy || '',
