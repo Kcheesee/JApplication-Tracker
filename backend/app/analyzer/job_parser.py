@@ -252,7 +252,16 @@ class JobPostingParser:
             "your impact", "job description", "overview", "summary", "apply now",
             "how to apply", "equal opportunity", "diversity", "inclusion",
             "how we're different", "why join us", "why work here", "our culture",
-            "what we offer", "what's in it for you", "our values", "our mission"
+            "what we offer", "what's in it for you", "our values", "our mission",
+            # Legal/compliance section headers
+            "state-specific notices", "application window notice", "legal notice",
+            "the opportunity", "industry focus", "eeo statement", "accessibility",
+            # US state names (used as legal notice headers)
+            "california", "massachusetts", "new york", "texas", "colorado",
+            "washington", "illinois", "florida", "pennsylvania", "ohio",
+            "georgia", "north carolina", "michigan", "new jersey", "virginia",
+            "arizona", "tennessee", "maryland", "minnesota", "wisconsin",
+            "massachusetts legal notice", "california legal notice",
         ]
         if any(line_lower == header or line_lower.startswith(header + ":") for header in section_headers):
             return None
@@ -409,6 +418,25 @@ class JobPostingParser:
             (r"(safe|beneficial|reliable).*(ai|users|society)", False),
             (r"researchers.*engineers.*leaders", False),
             (r"build.*(beneficial|steerable|interpretable)", False),
+            # Hiring mission boilerplate (different from company mission)
+            (r"mission to hire the very best", False),
+            (r"hire the very best", False),
+            (r"exceptional employee experience", False),
+            (r"new ideas can come from everywhere", False),
+            (r"next big idea could be yours", False),
+            (r"everyone is respected and has access", False),
+            # Legal/EEO/compliance boilerplate
+            (r"equal employment opportunity", False),
+            (r"proud to be an? .* employer", False),
+            (r"do not discriminate", False),
+            (r"protected by law", False),
+            (r"unlawful .* to require", False),  # Lie detector law
+            (r"lie detector test", False),
+            (r"criminal penalties and civil liability", False),
+            (r"disability or special need", False),
+            (r"accommodation.*navigate our website", False),
+            (r"accommodations@", False),  # Accessibility email
+            (r"accessible to .* all users", False),
         ]
         for pattern, use_original in non_requirement_patterns:
             text_to_check = cleaned_line if use_original else line_lower
