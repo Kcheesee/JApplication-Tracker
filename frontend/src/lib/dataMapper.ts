@@ -13,6 +13,7 @@ interface BackendApplication {
   role_duties?: string;
   notes?: string;
   email_id?: string;
+  email_thread_id?: string;
   interview_date?: string;
   interview_type?: string;
   interview_questions?: string;
@@ -155,7 +156,7 @@ export function backendToFrontend(app: BackendApplication): Job {
     appliedAt: app.application_date || app.created_at || new Date().toISOString().split('T')[0],
     status: mapStatus(app.status),
     lastActivity: app.updated_at || app.created_at || new Date().toISOString(),
-    emailLink: constructGmailLink(app.email_id),
+    emailLink: constructGmailLink(app.email_id || app.email_thread_id),
     postingUrl: validJobLink,
     portalUrl: extractPortalUrl(validJobLink, app.notes),
     description: app.job_description || app.role_duties,

@@ -79,6 +79,7 @@ class Application(Base):
 
     # Metadata
     email_id = Column(String, nullable=True)  # Gmail message ID for reference
+    email_thread_id = Column(String, nullable=True, index=True)  # Gmail thread ID for duplicate detection
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

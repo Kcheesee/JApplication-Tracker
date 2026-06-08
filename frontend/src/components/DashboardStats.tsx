@@ -38,6 +38,8 @@ export function DashboardStats({ jobs, preferences }: DashboardStatsProps) {
 
   const rejectedCount = jobs.filter(job => job.status === 'Rejected').length;
 
+  const ghostedCount = jobs.filter(job => job.status === 'Ghosted').length;
+
   const pendingCount = jobs.filter(job => job.status === 'Applied').length;
 
   const responseRate = totalApplications > 0
@@ -102,6 +104,14 @@ export function DashboardStats({ jobs, preferences }: DashboardStatsProps) {
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
+    },
+    {
+      key: 'showGhosted',
+      label: 'Ghosted',
+      value: ghostedCount,
+      icon: XCircle,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-100',
     },
   ];
 

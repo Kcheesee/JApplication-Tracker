@@ -9,8 +9,16 @@ from ..database import get_db
 from ..models.user import User
 from ..models.user_settings import UserSettings
 from ..models.application import Application
+from ..models.status_history import StatusHistory
 from ..services.gmail_service import GmailService
 from ..services.llm_service import LLMService
+from ..services.application_dedupe import (
+    append_unique_note,
+    find_existing_gmail_application,
+    get_email_thread_id,
+    get_primary_job_url,
+    sync_email_reference,
+)
 from ..utils.api_key_helper import get_llm_api_key
 from ..config import get_settings
 import logging
@@ -128,23 +136,35 @@ async def sync_user_gmail(user: User, db: Session):
             skipped_count += 1
             continue
 
-        # Check if application already exists
-        existing = db.query(Application).filter(
-            Application.user_id == user.id,
-            Application.email_id == email['id']
-        ).first()
+        existing = find_existing_gmail_application(
+            db=db,
+            user_id=user.id,
+            email=email,
+            job_data=job_data
+        )
 
         if existing:
             # Update existing
-            existing.status = job_data.get('status', existing.status)
-            if job_data.get('notes'):
-                existing.notes = f"{existing.notes}\n\n{job_data['notes']}" if existing.notes else job_data['notes']
+            sync_email_reference(existing, email)
+            old_status = existing.status
+            new_status = job_data.get('status', existing.status)
+            if new_status != old_status:
+                existing.status = new_status
+                status_change = StatusHistory(
+                    application_id=existing.id,
+                    old_status=old_status,
+                    new_status=new_status,
+                    notes="Status updated via scheduled Gmail sync"
+                )
+                db.add(status_change)
+            existing.notes = append_unique_note(existing.notes, job_data.get('notes'))
             updated_count += 1
         else:
             # Create new
             new_application = Application(
                 user_id=user.id,
                 email_id=email['id'],
+                email_thread_id=get_email_thread_id(email),
                 company=job_data.get('company'),
                 position=job_data.get('position'),
                 status=job_data.get('status', 'Applied'),
@@ -166,9 +186,19 @@ async def sync_user_gmail(user: User, db: Session):
                 company_size=job_data.get('company_size'),
                 industry=job_data.get('industry'),
                 application_deadline=job_data.get('application_deadline'),
-                job_link=email['urls'][0] if email['urls'] else None
+                job_link=get_primary_job_url(email)
             )
             db.add(new_application)
+            db.flush()
+
+            initial_status = job_data.get('status', 'Applied')
+            initial_history = StatusHistory(
+                application_id=new_application.id,
+                old_status=None,
+                new_status=initial_status,
+                notes="Application created via scheduled Gmail sync"
+            )
+            db.add(initial_history)
             new_count += 1
 
     # Commit changes

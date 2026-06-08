@@ -10,6 +10,7 @@ export interface DashboardPreferences {
   showResponseRate: boolean;
   showPending: boolean;
   showRejected: boolean;
+  showGhosted: boolean;
   showStatusBreakdown: boolean;
   showRecentActivity: boolean;
   showTimeline: boolean;
@@ -23,6 +24,7 @@ export const DEFAULT_PREFERENCES: DashboardPreferences = {
   showResponseRate: true,
   showPending: true,
   showRejected: true,
+  showGhosted: true,
   showStatusBreakdown: true,
   showRecentActivity: true,
   showTimeline: true,
@@ -58,6 +60,7 @@ export function DashboardSettings({ preferences, onSave }: DashboardSettingsProp
     { key: 'showResponseRate' as const, label: 'Response Rate', description: 'Percentage of companies that responded' },
     { key: 'showPending' as const, label: 'Awaiting Response', description: 'Applications still pending' },
     { key: 'showRejected' as const, label: 'Rejected Applications', description: 'Track rejections (can be hidden for positivity!)' },
+    { key: 'showGhosted' as const, label: 'Ghosted Applications', description: 'Track applications that stopped receiving replies' },
     { key: 'showStatusBreakdown' as const, label: 'Status Breakdown Chart', description: 'Visual breakdown by status' },
     { key: 'showRecentActivity' as const, label: 'Recent Activity Feed', description: 'Latest updates on your applications' },
     { key: 'showTimeline' as const, label: 'Application Timeline', description: '30-day activity chart' },

@@ -146,6 +146,7 @@ class GmailService:
 
             return {
                 'id': message_id,
+                'thread_id': message.get('threadId'),
                 'subject': subject,
                 'from': sender,
                 'date': date_str,

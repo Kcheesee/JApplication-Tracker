@@ -28,6 +28,8 @@ export function RecentActivity({ jobs, limit = 5 }: RecentActivityProps) {
         return { icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-100' };
       case 'Rejected':
         return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'Ghosted':
+        return { icon: XCircle, color: 'text-gray-600', bg: 'bg-gray-100' };
       case 'Applied':
         return { icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' };
       default:
@@ -83,6 +85,7 @@ export function RecentActivity({ jobs, limit = 5 }: RecentActivityProps) {
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     job.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                    job.status === 'Ghosted' ? 'bg-gray-100 text-gray-700' :
                     job.status === 'Interviewing' || job.status === 'Interview Scheduled' ? 'bg-green-100 text-green-700' :
                     job.status === 'Offer' || job.status === 'Offer Received' ? 'bg-purple-100 text-purple-700' :
                     'bg-blue-100 text-blue-700'

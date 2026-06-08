@@ -81,6 +81,7 @@ class ApplicationResponse(ApplicationBase):
     id: int
     user_id: int
     email_id: Optional[str]
+    email_thread_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime]
 

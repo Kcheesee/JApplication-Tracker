@@ -59,6 +59,8 @@ def run_migrations():
         "ALTER TABLE applications ADD COLUMN IF NOT EXISTS fit_analysis_date TIMESTAMP WITH TIME ZONE NULL",
         "ALTER TABLE applications ADD COLUMN IF NOT EXISTS tailoring_plan TEXT NULL",
         "ALTER TABLE applications ADD COLUMN IF NOT EXISTS tailoring_plan_date TIMESTAMP WITH TIME ZONE NULL",
+        "ALTER TABLE applications ADD COLUMN IF NOT EXISTS email_thread_id VARCHAR NULL",
+        "CREATE INDEX IF NOT EXISTS ix_applications_email_thread_id ON applications(email_thread_id)",
     ]
 
     with engine.connect() as conn:

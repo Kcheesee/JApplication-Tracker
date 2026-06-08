@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [preferences, setPreferences] = useState<DashboardPreferences>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_PREFERENCES;
+    return saved ? { ...DEFAULT_PREFERENCES, ...JSON.parse(saved) } : DEFAULT_PREFERENCES;
   });
 
   useEffect(() => {

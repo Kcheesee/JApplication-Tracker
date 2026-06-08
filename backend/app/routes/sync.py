@@ -10,7 +10,13 @@ from ..models.status_history import StatusHistory
 from ..auth.security import get_current_user
 from ..services.gmail_service import GmailService
 from ..services.llm_service import LLMService
-from ..config import get_settings as get_app_settings
+from ..services.application_dedupe import (
+    append_unique_note,
+    find_existing_gmail_application,
+    get_email_thread_id,
+    get_primary_job_url,
+    sync_email_reference,
+)
 from ..utils.api_key_helper import get_llm_api_key
 
 logger = logging.getLogger(__name__)
@@ -127,14 +133,16 @@ def sync_gmail(
                 skipped_count += 1
                 continue
 
-            # Check if application already exists (match by company and email_id for updates)
-            existing = db.query(Application).filter(
-                Application.user_id == current_user.id,
-                Application.email_id == email['id']
-            ).first()
+            existing = find_existing_gmail_application(
+                db=db,
+                user_id=current_user.id,
+                email=email,
+                job_data=job_data
+            )
 
             if existing:
                 # Update existing application
+                sync_email_reference(existing, email)
                 old_status = existing.status
                 new_status = job_data.get('status', existing.status)
 
@@ -149,14 +157,14 @@ def sync_gmail(
                     )
                     db.add(status_change)
 
-                if job_data.get('notes'):
-                    existing.notes = f"{existing.notes}\n\n{job_data['notes']}" if existing.notes else job_data['notes']
+                existing.notes = append_unique_note(existing.notes, job_data.get('notes'))
                 updated_count += 1
             else:
                 # Create new application
                 new_application = Application(
                     user_id=current_user.id,
                     email_id=email['id'],
+                    email_thread_id=get_email_thread_id(email),
                     company=job_data.get('company'),
                     position=job_data.get('position'),
                     status=job_data.get('status', 'Applied'),
@@ -178,7 +186,7 @@ def sync_gmail(
                     company_size=job_data.get('company_size'),
                     industry=job_data.get('industry'),
                     application_deadline=job_data.get('application_deadline'),
-                    job_link=email['urls'][0] if email['urls'] else None
+                    job_link=get_primary_job_url(email)
                 )
                 db.add(new_application)
                 db.flush()  # Get the ID for the new application
