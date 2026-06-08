@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials
+from jose import JWTError, jwt
+from datetime import datetime, timedelta, timezone
 import json
 import os
+import secrets
 
 from ..database import get_db
 from ..models.user import User
@@ -62,12 +65,23 @@ def google_authorize(
     # Set redirect URI
     flow.redirect_uri = f"{request.base_url}api/oauth/google/callback"
 
-    # Generate authorization URL with user ID encoded in state
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    state_token = jwt.encode(
+        {
+            "sub": str(current_user.id),
+            "nonce": secrets.token_urlsafe(16),
+            "exp": expires_at
+        },
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+
+    # Generate authorization URL with a signed, expiring state token
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='false',  # Only request Gmail scopes, not login scopes
         prompt='consent',  # Force consent screen to get refresh token
-        state=f"user_{current_user.id}"  # Encode user ID in state
+        state=state_token
     )
 
     return {
@@ -87,18 +101,12 @@ async def google_callback(
     Handle OAuth callback from Google
     Exchanges auth code for tokens and stores them
     """
-    # Extract user ID from state
-    if not state.startswith("user_"):
+    try:
+        payload = jwt.decode(state, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = int(payload.get("sub"))
+    except (JWTError, TypeError, ValueError):
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/settings?oauth=error&message=Invalid state parameter",
-            status_code=status.HTTP_302_FOUND
-        )
-
-    try:
-        user_id = int(state.replace("user_", ""))
-    except ValueError:
-        return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/settings?oauth=error&message=Invalid user ID in state",
             status_code=status.HTTP_302_FOUND
         )
 

@@ -42,6 +42,14 @@ def run_migrations():
     Uses ADD COLUMN IF NOT EXISTS for idempotency.
     """
     migrations = [
+        # LLM provider settings
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS llm_provider VARCHAR DEFAULT 'anthropic'",
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS llm_model VARCHAR NULL",
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS anthropic_api_key VARCHAR NULL",
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS openai_api_key VARCHAR NULL",
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS google_api_key VARCHAR NULL",
+        "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS openrouter_api_key VARCHAR NULL",
+
         # Fit analysis columns (Phase 3)
         "ALTER TABLE applications ADD COLUMN IF NOT EXISTS fit_analysis_score FLOAT NULL",
         "ALTER TABLE applications ADD COLUMN IF NOT EXISTS fit_analysis_label VARCHAR(255) NULL",

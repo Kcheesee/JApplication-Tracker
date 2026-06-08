@@ -15,10 +15,10 @@ interface RequirementBreakdownProps {
 }
 
 export default function RequirementBreakdown({ matches }: RequirementBreakdownProps) {
-    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    const toggleExpand = (index: number) => {
-        setExpandedId(expandedId === index ? null : index);
+    const toggleExpand = (id: string) => {
+        setExpandedId(expandedId === id ? null : id);
     };
 
     const getStrengthIcon = (strength: string) => {
@@ -70,13 +70,14 @@ export default function RequirementBreakdown({ matches }: RequirementBreakdownPr
                     </div>
                     <div className="divide-y divide-gray-100">
                         {categoryMatches.map((match, index) => {
-                            const isExpanded = expandedId === index; // Simplified for demo, ideally use unique IDs
+                            const itemId = `${category}-${index}`;
+                            const isExpanded = expandedId === itemId;
 
                             return (
                                 <div key={index} className={`p-4 ${getStrengthColor(match.strength)} bg-opacity-30`}>
                                     <div
                                         className="flex items-start justify-between cursor-pointer"
-                                        onClick={() => toggleExpand(index)} // Note: this logic needs refinement for unique IDs across categories if flat list used
+                                        onClick={() => toggleExpand(itemId)}
                                     >
                                         <div className="flex items-start space-x-3">
                                             <div className="mt-0.5 flex-shrink-0">
@@ -94,28 +95,28 @@ export default function RequirementBreakdown({ matches }: RequirementBreakdownPr
                                         </button>
                                     </div>
 
-                                    {/* Expanded Details */}
-                                    {/* Using a simple expansion logic for now, might need state management per item */}
-                                    <div className="mt-3 pl-8 text-sm text-gray-600">
-                                        <p className="mb-2"><span className="font-medium">Analysis:</span> {match.explanation}</p>
+                                    {isExpanded && (
+                                        <div className="mt-3 pl-8 text-sm text-gray-600">
+                                            <p className="mb-2"><span className="font-medium">Analysis:</span> {match.explanation}</p>
 
-                                        {match.evidence && match.evidence.length > 0 && (
-                                            <div className="mb-2">
-                                                <span className="font-medium">Evidence found:</span>
-                                                <ul className="list-disc list-inside ml-2 mt-1 text-gray-500">
-                                                    {match.evidence.map((e, i) => (
-                                                        <li key={i}>{e}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
+                                            {match.evidence && match.evidence.length > 0 && (
+                                                <div className="mb-2">
+                                                    <span className="font-medium">Evidence found:</span>
+                                                    <ul className="list-disc list-inside ml-2 mt-1 text-gray-500">
+                                                        {match.evidence.map((e, i) => (
+                                                            <li key={i}>{e}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
 
-                                        {match.suggestion && (
-                                            <div className="mt-2 p-2 bg-blue-50 rounded text-blue-800 text-xs">
-                                                <span className="font-bold">Suggestion:</span> {match.suggestion}
-                                            </div>
-                                        )}
-                                    </div>
+                                            {match.suggestion && (
+                                                <div className="mt-2 p-2 bg-blue-50 rounded text-blue-800 text-xs">
+                                                    <span className="font-bold">Suggestion:</span> {match.suggestion}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

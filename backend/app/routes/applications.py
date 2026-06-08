@@ -46,25 +46,31 @@ def get_applications(
     return applications
 
 
-@router.get("/{application_id}", response_model=ApplicationResponse)
-def get_application(
-    application_id: int,
+@router.get("/stats/summary")
+def get_application_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get a specific application"""
-    application = db.query(Application).filter(
-        Application.id == application_id,
-        Application.user_id == current_user.id
-    ).first()
+    """Get application statistics for the current user"""
+    applications = db.query(Application).filter(Application.user_id == current_user.id).all()
 
-    if not application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found"
+    total = len(applications)
+    status_counts = {}
+
+    for app in applications:
+        status = app.status
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    return {
+        "total_applications": total,
+        "status_breakdown": status_counts,
+        "recent_applications": sorted(
+            [{"company": app.company, "position": app.position, "status": app.status, "date": app.created_at}
+             for app in applications[-10:]],
+            key=lambda x: x["date"],
+            reverse=True
         )
-
-    return application
+    }
 
 
 @router.post("", response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED)
@@ -108,6 +114,121 @@ def create_application(
     db.commit()
 
     return new_application
+
+
+@router.get("/{application_id}", response_model=ApplicationResponse)
+def get_application(
+    application_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific application"""
+    application = db.query(Application).filter(
+        Application.id == application_id,
+        Application.user_id == current_user.id
+    ).first()
+
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found"
+        )
+
+    return application
+
+
+def _bulk_update_status_for_user(
+    application_ids: List[int],
+    new_status: str,
+    current_user: User,
+    db: Session
+):
+    """Bulk update status for multiple applications owned by a user."""
+    updated_count = 0
+    errors = []
+
+    for app_id in application_ids:
+        try:
+            application = db.query(Application).filter(
+                Application.id == app_id,
+                Application.user_id == current_user.id
+            ).first()
+
+            if not application:
+                errors.append(f"Application {app_id} not found")
+                continue
+
+            old_status = application.status
+
+            if old_status != new_status:
+                application.status = new_status
+
+                status_change = StatusHistory(
+                    application_id=application.id,
+                    old_status=old_status,
+                    new_status=new_status,
+                    notes=f"Bulk status update from {old_status} to {new_status}"
+                )
+                db.add(status_change)
+                updated_count += 1
+
+        except Exception as e:
+            errors.append(f"Error updating application {app_id}: {str(e)}")
+
+    db.commit()
+
+    return {
+        "success": True,
+        "updated_count": updated_count,
+        "errors": errors
+    }
+
+
+@router.post("/bulk-update-status")
+def bulk_update_status(
+    application_ids: List[int] = Body(..., embed=True),
+    new_status: str = Body(..., embed=True),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk update status for multiple applications"""
+    return _bulk_update_status_for_user(application_ids, new_status, current_user, db)
+
+
+@router.delete("/bulk-delete")
+def bulk_delete_applications(
+    request: BulkDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Bulk delete multiple applications"""
+    deleted_count = 0
+    errors = []
+
+    for app_id in request.application_ids:
+        try:
+            application = db.query(Application).filter(
+                Application.id == app_id,
+                Application.user_id == current_user.id
+            ).first()
+
+            if not application:
+                errors.append(f"Application {app_id} not found")
+                continue
+
+            db.delete(application)
+            deleted_count += 1
+
+        except Exception as e:
+            errors.append(f"Error deleting application {app_id}: {str(e)}")
+
+    db.commit()
+
+    return {
+        "success": True,
+        "deleted_count": deleted_count,
+        "errors": errors
+    }
 
 
 @router.put("/{application_id}", response_model=ApplicationResponse)
@@ -221,117 +342,15 @@ def get_status_history(
 
 
 @router.post("/{application_id}/bulk-update-status")
-def bulk_update_status(
+def bulk_update_status_legacy(
+    application_id: int,
     application_ids: List[int] = Body(..., embed=True),
     new_status: str = Body(..., embed=True),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Bulk update status for multiple applications"""
-    updated_count = 0
-    errors = []
-
-    for app_id in application_ids:
-        try:
-            application = db.query(Application).filter(
-                Application.id == app_id,
-                Application.user_id == current_user.id
-            ).first()
-
-            if not application:
-                errors.append(f"Application {app_id} not found")
-                continue
-
-            old_status = application.status
-
-            # Only update if status actually changes
-            if old_status != new_status:
-                application.status = new_status
-
-                # Create history entry
-                status_change = StatusHistory(
-                    application_id=application.id,
-                    old_status=old_status,
-                    new_status=new_status,
-                    notes=f"Bulk status update from {old_status} to {new_status}"
-                )
-                db.add(status_change)
-                updated_count += 1
-
-        except Exception as e:
-            errors.append(f"Error updating application {app_id}: {str(e)}")
-
-    db.commit()
-
-    return {
-        "success": True,
-        "updated_count": updated_count,
-        "errors": errors
-    }
-
-
-@router.delete("/bulk-delete")
-def bulk_delete_applications(
-    request: BulkDeleteRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Bulk delete multiple applications"""
-    deleted_count = 0
-    errors = []
-
-    for app_id in request.application_ids:
-        try:
-            application = db.query(Application).filter(
-                Application.id == app_id,
-                Application.user_id == current_user.id
-            ).first()
-
-            if not application:
-                errors.append(f"Application {app_id} not found")
-                continue
-
-            db.delete(application)
-            deleted_count += 1
-
-        except Exception as e:
-            errors.append(f"Error deleting application {app_id}: {str(e)}")
-
-    db.commit()
-
-    return {
-        "success": True,
-        "deleted_count": deleted_count,
-        "errors": errors
-    }
-
-
-@router.get("/stats/summary")
-def get_application_stats(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get application statistics for the current user"""
-    applications = db.query(Application).filter(Application.user_id == current_user.id).all()
-
-    # Calculate stats
-    total = len(applications)
-    status_counts = {}
-
-    for app in applications:
-        status = app.status
-        status_counts[status] = status_counts.get(status, 0) + 1
-
-    return {
-        "total_applications": total,
-        "status_breakdown": status_counts,
-        "recent_applications": sorted(
-            [{"company": app.company, "position": app.position, "status": app.status, "date": app.created_at}
-             for app in applications[-10:]],
-            key=lambda x: x["date"],
-            reverse=True
-        )
-    }
+    """Backward-compatible bulk status endpoint."""
+    return _bulk_update_status_for_user(application_ids, new_status, current_user, db)
 
 
 @router.post("/parse-url")

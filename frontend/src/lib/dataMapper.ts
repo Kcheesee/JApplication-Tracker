@@ -22,6 +22,7 @@ interface BackendApplication {
   work_mode?: string;
   salary_min?: number;
   salary_max?: number;
+  salary_currency?: string;
   recruiter_name?: string;
   recruiter_email?: string;
   recruiter_phone?: string;
@@ -29,6 +30,10 @@ interface BackendApplication {
   company_size?: string;
   industry?: string;
   application_deadline?: string;
+  resume_version?: string;
+  resume_url?: string;
+  resume_file_name?: string;
+  next_steps?: string;
   created_at?: string;
   updated_at?: string;
   user_id?: number;
@@ -59,7 +64,7 @@ function mapStatusReverse(frontendStatus: JobStatus): string {
     "Interviewing": "Interview Scheduled",
     "Rejected": "Rejected",
     "Offer": "Offer Received",
-    "Ghosted": "Rejected",
+    "Ghosted": "Ghosted",
     "Interview Scheduled": "Interview Scheduled",
     "Offer Received": "Offer Received",
     "Follow-up Needed": "Follow-up Needed",
@@ -155,8 +160,11 @@ export function backendToFrontend(app: BackendApplication): Job {
     portalUrl: extractPortalUrl(validJobLink, app.notes),
     description: app.job_description || app.role_duties,
     notes: app.notes,
-    resumeLabel: extractResumeLabel(app.notes),
-    resumeUrl: extractResumeUrl(app.notes),
+    resumeLabel: app.resume_version || extractResumeLabel(app.notes),
+    resumeUrl: app.resume_url || extractResumeUrl(app.notes),
+    resume_version: app.resume_version,
+    resume_url: app.resume_url,
+    resume_file_name: app.resume_file_name,
     // Keep additional backend fields
     position: app.position,
     application_date: app.application_date,
@@ -177,6 +185,7 @@ export function backendToFrontend(app: BackendApplication): Job {
     company_size: app.company_size,
     industry: app.industry,
     application_deadline: app.application_deadline,
+    next_steps: app.next_steps,
     job_link: validJobLink,
     created_at: app.created_at,
     updated_at: app.updated_at,
@@ -203,6 +212,8 @@ export function frontendToBackend(job: Partial<Job>): Partial<BackendApplication
     work_mode: job.work_mode,
     salary_min: job.salary_min,
     salary_max: job.salary_max,
+    salary_currency: job.salary_currency,
+    next_steps: job.next_steps,
     recruiter_name: job.recruiter_name,
     recruiter_email: job.recruiter_email,
     recruiter_phone: job.recruiter_phone,
@@ -210,6 +221,9 @@ export function frontendToBackend(job: Partial<Job>): Partial<BackendApplication
     company_size: job.company_size,
     industry: job.industry,
     application_deadline: job.application_deadline,
+    resume_version: job.resume_version || job.resumeLabel,
+    resume_url: job.resume_url || job.resumeUrl,
+    resume_file_name: job.resume_file_name,
   };
 }
 

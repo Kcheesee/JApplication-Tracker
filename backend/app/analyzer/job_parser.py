@@ -77,8 +77,8 @@ class JobPostingParser:
     
     # Patterns for requirement extraction
     EXPERIENCE_PATTERNS = [
-        r"(\d+)\+?\s*years?\s*(of)?\s*(experience)?",
         r"(\d+)-(\d+)\s*years?",
+        r"(\d+)\+?\s*years?\s*(of)?\s*(experience)?",
         r"at least (\d+) years?",
         r"minimum (\d+) years?",
     ]
@@ -156,6 +156,7 @@ class JobPostingParser:
     def _categorize_requirement(self, text: str) -> RequirementCategory:
         """Categorize a requirement."""
         text_lower = text.lower()
+        years_experience = self._extract_years_experience(text_lower)
 
         # Check for logistics FIRST (most specific)
         logistics_indicators = ["location", "remote", "hybrid", "travel", "clearance",
@@ -164,11 +165,9 @@ class JobPostingParser:
         if any(w in text_lower for w in logistics_indicators):
             return RequirementCategory.LOGISTICS
 
-        # Check for explicit experience mentions BEFORE education
-        # This prevents "X experience" from being miscategorized as EDUCATION
-        experience_explicit = ["years of experience", "years experience", "experience in",
-                               "experience with", "experience including", "track record"]
-        if any(phrase in text_lower for phrase in experience_explicit):
+        # Years are the strongest signal that a line is an experience requirement,
+        # even when it mentions a technical skill.
+        if years_experience is not None:
             return RequirementCategory.EXPERIENCE
 
         # Check for education (specific keywords) - be careful with false positives!
@@ -186,6 +185,14 @@ class JobPostingParser:
         ]
         if any(phrase in text_lower for phrase in edu_exact_phrases):
             return RequirementCategory.EDUCATION
+
+        # Check for soft skills before generic experience. "Team collaboration
+        # experience" is a soft-skill requirement, not years-of-experience.
+        soft_indicators = ["communication skills", "leadership", "team", "collaborate",
+                          "collaboration", "interpersonal", "presentation", "organized",
+                          "ability to work", "work independently"]
+        if any(w in text_lower for w in soft_indicators):
+            return RequirementCategory.SOFT_SKILLS
         
         # Check for technical skills (before general experience check)
         tech_indicators = ["python", "java", "sql", "api", "cloud", "aws", "docker",
@@ -194,18 +201,14 @@ class JobPostingParser:
                           "framework", "library", "tool", "typescript", "javascript",
                           "git", "ci/cd", "microservices", "rest"]
         if any(w in text_lower for w in tech_indicators):
-            # Make sure it's not just mentioning experience WITH a tech
-            # If it says "experience with Python", that's still technical skills
             return RequirementCategory.TECHNICAL_SKILLS
-        
-        # Check for soft skills (specific patterns)
-        soft_indicators = ["communication skills", "leadership", "team", "collaborate",
-                          "interpersonal", "presentation", "organized", "ability to work"]
-        # Only soft skills if no "years" or "experience" (which would make it experience category)
-        if any(w in text_lower for w in soft_indicators):
-            # Check it's not also an experience requirement
-            if "year" not in text_lower and "experience" not in text_lower:
-                return RequirementCategory.SOFT_SKILLS
+
+        # Check for explicit/general experience mentions after more specific skill
+        # categories have had a chance to match.
+        experience_explicit = ["years of experience", "years experience", "experience in",
+                               "experience with", "experience including", "track record"]
+        if any(phrase in text_lower for phrase in experience_explicit):
+            return RequirementCategory.EXPERIENCE
         
         # Check for experience last (most general)
         if any(w in text_lower for w in ["year", "experience", "background"]):
@@ -242,6 +245,19 @@ class JobPostingParser:
             return None
 
         line_lower = cleaned_line.lower()
+
+        requirement_signals = [
+            "experience", "years", "year", "proficient", "proficiency", "knowledge",
+            "ability", "skilled", "familiarity", "understanding", "degree", "bachelor",
+            "master", "phd", "certification", "certified", "expertise", "expert",
+            "strong", "excellent", "demonstrated", "proven", "track record",
+            "background", "history", "comfortable", "capable", "competent",
+            "must have", "required", "preferred", "nice to have", "bonus",
+            "minimum", "at least", "ideally", "+", "or more", "working with",
+            "hands-on", "deep understanding", "solid", "thorough"
+        ]
+        has_requirement_signal = any(signal in line_lower for signal in requirement_signals)
+        has_tech_keyword = any(kw in line_lower for kw in self.TECH_KEYWORDS)
 
         # Skip section headers (short lines that are just titles)
         section_headers = [
@@ -376,23 +392,6 @@ class JobPostingParser:
         # Real requirements are usually concise (under 300 chars)
         if len(cleaned_line) > 400:
             return None
-
-        # Skip lines that don't look like requirements
-        # Requirements typically have: years, skills, experience, degree, ability, knowledge, etc.
-        requirement_signals = [
-            "experience", "years", "year", "proficient", "proficiency", "knowledge",
-            "ability", "skilled", "familiarity", "understanding", "degree", "bachelor",
-            "master", "phd", "certification", "certified", "expertise", "expert",
-            "strong", "excellent", "demonstrated", "proven", "track record",
-            "background", "history", "comfortable", "capable", "competent",
-            "must have", "required", "preferred", "nice to have", "bonus",
-            "minimum", "at least", "ideally", "+", "or more", "working with",
-            "hands-on", "deep understanding", "solid", "thorough"
-        ]
-
-        # Also check for technical keywords as signals
-        has_requirement_signal = any(signal in line_lower for signal in requirement_signals)
-        has_tech_keyword = any(kw in line_lower for kw in self.TECH_KEYWORDS)
 
         # Skip if it's a long line with no requirement signals (likely descriptive prose)
         if len(cleaned_line) > 150 and not has_requirement_signal and not has_tech_keyword:

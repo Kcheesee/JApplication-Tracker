@@ -344,7 +344,7 @@ export function JobTrackerWidget({ compact = false, groupByCompany = false }: Jo
     if (selectedIds.length === 0) return;
 
     try {
-      const response = await apiClient.post('/api/applications/1/bulk-update-status', {
+      const response = await apiClient.post('/api/applications/bulk-update-status', {
         application_ids: selectedIds.map(id => parseInt(id)),
         new_status: newStatus,
       });

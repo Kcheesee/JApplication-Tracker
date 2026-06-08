@@ -3,6 +3,7 @@ Encryption utility for securing API keys and sensitive data
 """
 from cryptography.fernet import Fernet
 import base64
+import hashlib
 import os
 from typing import Optional
 
@@ -27,11 +28,16 @@ class EncryptionService:
                 "Generate one with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
             )
 
-        # Ensure the key is in bytes
+        # Ensure the key is in bytes. Accept both Fernet keys and ordinary
+        # deployment secrets so hosts can generate values in their native format.
         if isinstance(encryption_key, str):
             encryption_key = encryption_key.encode()
 
-        self.cipher = Fernet(encryption_key)
+        try:
+            self.cipher = Fernet(encryption_key)
+        except ValueError:
+            derived_key = base64.urlsafe_b64encode(hashlib.sha256(encryption_key).digest())
+            self.cipher = Fernet(derived_key)
 
     def encrypt(self, plaintext: str) -> str:
         """

@@ -88,6 +88,18 @@ class Settings(BaseSettings):
 
         return v
 
+    @field_validator('FRONTEND_URL')
+    @classmethod
+    def normalize_frontend_url(cls, v: str) -> str:
+        """Normalize host-only deployment values into browser origins."""
+        if not v:
+            return v
+        if v.startswith(("http://", "https://")):
+            return v.rstrip("/")
+        if v.startswith("localhost") or v.startswith("127.0.0.1"):
+            return f"http://{v}".rstrip("/")
+        return f"https://{v}".rstrip("/")
+
     class Config:
         env_file = ".env"
         case_sensitive = True

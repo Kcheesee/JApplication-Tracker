@@ -132,7 +132,7 @@ const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): Enhanced
         // Convert strengths to strong matches
         strengths.forEach((s: any, idx: number) => {
             synthesizedMatches.push({
-                requirement: s.title || s.description || `Strength ${idx + 1}`,
+                requirement_text: s.title || s.description || `Strength ${idx + 1}`,
                 strength: 'strong',
                 explanation: s.description || s.competitive_advantage || '',
                 category: s.category || 'general',
@@ -143,7 +143,7 @@ const processAnalysisData = (apiData: Partial<EnhancedAnalysisResult>): Enhanced
         // Convert gaps to gap matches
         gaps.forEach((g: any, idx: number) => {
             synthesizedMatches.push({
-                requirement: g.requirement_text || g.gap_description || `Gap ${idx + 1}`,
+                requirement_text: g.requirement_text || g.gap_description || `Gap ${idx + 1}`,
                 strength: 'gap',
                 explanation: g.gap_description || g.impact_on_application || '',
                 category: g.category || 'general',
@@ -224,7 +224,18 @@ export default function JobFitAnalyzer() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setResumeFile(e.target.files[0]);
+            const file = e.target.files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                setError("Only PDF resumes are supported right now");
+                e.target.value = '';
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                setError("Resume file must be 10MB or smaller");
+                e.target.value = '';
+                return;
+            }
+            setResumeFile(file);
             setError(null);
         }
     };
@@ -479,10 +490,10 @@ Include:
                                         <span className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                                             Upload a file
                                         </span>
-                                        <p className="pl-1">or drag and drop</p>
+                                        <p className="pl-1">PDF resume</p>
                                     </div>
                                     <p className="text-xs text-gray-500">
-                                        PDF, DOCX up to 10MB
+                                        Up to 10MB
                                     </p>
                                 </div>
                             </div>
@@ -504,26 +515,11 @@ Include:
                                 </button>
                             </div>
                         )}
-                        {!resumeFile && (
-                            <div className="mt-2 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const sampleFile = new File(["dummy content"], "sample_resume.pdf", { type: "application/pdf" });
-                                        setResumeFile(sampleFile);
-                                        setError(null);
-                                    }}
-                                    className="text-sm text-indigo-600 hover:text-indigo-500"
-                                >
-                                    Use sample resume
-                                </button>
-                            </div>
-                        )}
                         <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
-                            accept=".pdf,.docx,.txt"
+                            accept=".pdf,application/pdf"
                             onChange={handleFileChange}
                         />
                     </div>

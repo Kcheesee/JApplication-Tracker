@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   register: (email: string, username: string, password: string, fullName?: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   setUser: (user: User) => void
 }
 
@@ -61,7 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await login(username, password)
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await apiClient.post('/api/auth/logout')
+    } catch (error) {
+      console.error('Logout request failed:', error)
+    }
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)

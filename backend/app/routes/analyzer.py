@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Body, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import httpx
 import json
 from bs4 import BeautifulSoup
@@ -373,7 +373,7 @@ async def save_fit_analysis(
         application.fit_analysis_should_apply = str(analysis_data.get("should_apply", False))
         application.fit_analysis_recommendation = analysis_data.get("recommendation")
         application.fit_analysis_data = json.dumps(analysis_data)
-        application.fit_analysis_date = datetime.utcnow()
+        application.fit_analysis_date = datetime.now(timezone.utc)
         
         db.commit()
         
@@ -383,6 +383,8 @@ async def save_fit_analysis(
             "application_id": application_id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -425,6 +427,8 @@ async def get_fit_analysis(
             "analysis_date": application.fit_analysis_date
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -455,7 +459,7 @@ async def save_tailoring_plan(
             )
         
         application.tailoring_plan = json.dumps(tailoring_data)
-        application.tailoring_plan_date = datetime.utcnow()
+        application.tailoring_plan_date = datetime.now(timezone.utc)
         
         db.commit()
         
@@ -465,6 +469,8 @@ async def save_tailoring_plan(
             "application_id": application_id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -610,6 +616,12 @@ async def parse_resume_pdf(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Empty file uploaded"
+            )
+
+        if len(pdf_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Resume file must be 10MB or smaller"
             )
 
         # Get user's API key for LLM parsing

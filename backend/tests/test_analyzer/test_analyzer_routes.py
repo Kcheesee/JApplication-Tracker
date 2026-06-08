@@ -67,7 +67,7 @@ def test_user():
 @pytest.fixture
 def auth_headers(test_user):
     """Create authentication headers with token."""
-    token = create_access_token(data={"sub": test_user.email})
+    token = create_access_token(data={"sub": str(test_user.id)})
     return {"Authorization": f"Bearer {token}"}
 
 
